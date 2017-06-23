@@ -37,6 +37,7 @@ This version of **bitstring** has been edited to work with <https://micropython.
 What's working:
 
 .. code-block:: python
+
   # BitArray with keyword arguments
   bitstring.BitArray(int=32, length=7)
   bitstring.BitArray(intbe=-32768, length=16)
@@ -51,6 +52,7 @@ What's working:
 What's currently(!) not working because I(!!!) introduced bugs. As one can see there is a lot left to do.
 
 .. code-block:: python
+
   # Most variations of creating a BitArray
   bitstring.BitArray('0b001100')
   bitstring.BitArray('int:11=540')
