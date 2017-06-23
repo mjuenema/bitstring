@@ -38,33 +38,54 @@ What's working:
 
 .. code-block:: python
 
-  # BitArray with keyword arguments
+  # Some variations of constructing a BitArray 
+  bitstring.BitArray(hex='0x000001b3')
+  bitstring.BitArray(bin='0011 00')
   bitstring.BitArray(int=32, length=7)
   bitstring.BitArray(intbe=-32768, length=16)
   bitstring.BitArray(float=10.3, length=32)
   bitstring.BitArray(floatle=-273.15, length=64)
   bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
-  bitstring.BitArray(bool=True, bool=False)
-  # ...and conversions
+  bitstring.BitArray(bool=True)
+  
+  # Conversions
   bitstring.BitArray(int=32, length=7).bin
   bitstring.BitArray(int=32, length=7).tobytes()
+  bitstring.BitArray(bitstring.Bits(hex='0x000001b3'))
+  
+  # Comparison
+  bitstring.BitArray(hex='0x000001b3') == bitstring.BitArray(hex='0x000001b3')
+  
+  # Unary operation
+  ~bitstring.BitArray(hex='0x000001b3')
+  
+  # Slicing and joining
+  bitstring.BitArray(hex='0x000001b3')[5:10]
+  bitstring.BitArray(hex='0x000001b3') + bitstring.BitArray(int=32, length=7)
+  
 
-What's currently(!) not working because I(!!!) introduced bugs. As one can see there is a lot left to do.
+What's currently(!) not working because I(!!!) introduced bugs.
 
 .. code-block:: python
 
-  # Most variations of creating a BitArray
+  # The auto initialiser 
   bitstring.BitArray('0b001100')
   bitstring.BitArray('int:11=540')
   
   # Packing
   bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
+  
+  # Compact form
+  bitstring.pack('>qqqq', 10, 11, 12, 13)
 
-  # Bit operation
+  # Binary operations
   bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
+  
+  # Finding and replacing (because of the MicroPython regex implementation)
+  bitstring.BitArray(hex='0x000001b3').findall('00')
 
   # Probably lots of other things.
-  
+ 
 There are also some "behind the scenes" changes.
 
 * Copied code from ``Error()`` class into derived classes to work-around
