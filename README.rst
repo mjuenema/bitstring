@@ -170,7 +170,7 @@ Searching, inserting and deleting::
 Unit Tests
 ----------
 
-The 400+ unit tests should all pass for Python 2.6 and later.
+I have no plans to port the unit tests to MicroPython.
 
 ----
 
@@ -180,3 +180,5 @@ Copyright (c) 2016 Scott Griffiths
 For more information see the project's homepage on GitHub:
 <https://github.com/scott-griffiths/bitstring>
 
+The MicroPython version has been patched together by Markus Juenemann: 
+<https://github.com/mjuenema/micropython-bitstring>
