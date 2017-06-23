@@ -96,7 +96,7 @@ There are also some "behind the scenes" changes.
   to be adjusted.
 * MicroPython ``bytes`` and ``bytearrays`` don't have a ``fromhex()`` class method so the
   logic had to be re-written.
-* The original unittests won't work anymore. There is a simple ``tests/test-upython.py`` script
+* The original unittests won't work anymore. There is a simple ``tests/test-micropython.py`` script
   that checks some functionality.
 * I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
 
@@ -170,7 +170,8 @@ Searching, inserting and deleting::
 Unit Tests
 ----------
 
-The 400+ unit tests should all pass for Python 2.6 and later.
+I have no plans to port the unit tests to MicroPython. There is just a little script ``tests/test-micropython.py`` which
+should run and exit with 0 if successful.
 
 ----
 
@@ -180,3 +181,5 @@ Copyright (c) 2016 Scott Griffiths
 For more information see the project's homepage on GitHub:
 <https://github.com/scott-griffiths/bitstring>
 
+The MicroPython version has been patched together by Markus Juenemann: 
+<https://github.com/mjuenema/micropython-bitstring>
