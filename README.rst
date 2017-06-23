@@ -14,7 +14,7 @@ similar to a file or stream.
 bitstring is open source software, and has been released under the MIT
 licence.
 
-This module works in both Python 2.7 and Python 3.
+This module works in MicroPython.
 
 MicroPython version
 -------------------
