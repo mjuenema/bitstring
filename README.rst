@@ -96,7 +96,7 @@ There are also some "behind the scenes" changes.
   to be adjusted.
 * MicroPython ``bytes`` and ``bytearrays`` don't have a ``fromhex()`` class method so the
   logic had to be re-written.
-* The original unittests won't work anymore. There is a simple ``tests/test-upython.py`` script
+* The original unittests won't work anymore. There is a simple ``tests/test-micropython.py`` script
   that checks some functionality.
 * I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
 
@@ -170,7 +170,8 @@ Searching, inserting and deleting::
 Unit Tests
 ----------
 
-I have no plans to port the unit tests to MicroPython.
+I have no plans to port the unit tests to MicroPython. There is just a little script ``tests/test-micropython.py`` which
+should run and exit with 0 if successful.
 
 ----
 
