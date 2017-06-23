@@ -14,28 +14,90 @@ similar to a file or stream.
 bitstring is open source software, and has been released under the MIT
 licence.
 
-This module works in both Python 2.7 and Python 3.
+This module works in MicroPython.
 
 MicroPython version
 -------------------
 
 This version of **bitstring** has been edited to work with <https://micropython.org/>.
 
+* Code supporting Python 2.6 may no longer work. 
 * The <https://github.com/micropython/micropython-lib/tree/master/copy> module must
   be installed because it is missing from MicroPython.
 * The ``MmapByteArray()`` has been removed as there is no **mmap** module in
   MicroPython.
+* The ``ConstBitStream()``, ``BitStream()`` and ``BitString()`` classes have been removed.
+* Creating bit strings from file object is not supported.
 * References to the ``collections.Iterable`` and ``numbers.Integral`` have been
   replaced by calls to two functions ``_isinstance_iterable()`` and
   ``_isinstance_integral()`` which provide subset functionality.
 * The ``|=``, ``&=`` and ``^=`` operators are not supported as the **operator**
   module is missing from MicroPython.
+  
+What's working:
+
+.. code-block:: python
+
+  # Some variations of constructing a BitArray 
+  bitstring.BitArray(hex='0x000001b3')
+  bitstring.BitArray(bin='0011 00')
+  bitstring.BitArray(int=32, length=7)
+  bitstring.BitArray(intbe=-32768, length=16)
+  bitstring.BitArray(float=10.3, length=32)
+  bitstring.BitArray(floatle=-273.15, length=64)
+  bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
+  bitstring.BitArray(bool=True)
+  
+  # Conversions
+  bitstring.BitArray(int=32, length=7).bin
+  bitstring.BitArray(int=32, length=7).tobytes()
+  bitstring.BitArray(bitstring.Bits(hex='0x000001b3'))
+  
+  # Comparison
+  bitstring.BitArray(hex='0x000001b3') == bitstring.BitArray(hex='0x000001b3')
+  
+  # Unary operation
+  ~bitstring.BitArray(hex='0x000001b3')
+  
+  # Slicing and joining
+  bitstring.BitArray(hex='0x000001b3')[5:10]
+  bitstring.BitArray(hex='0x000001b3') + bitstring.BitArray(int=32, length=7)
+  
+
+What's currently(!) not working because I(!!!) introduced bugs.
+
+.. code-block:: python
+
+  # The auto initialiser 
+  bitstring.BitArray('0b001100')
+  bitstring.BitArray('int:11=540')
+  
+  # Packing
+  bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
+  
+  # Compact form
+  bitstring.pack('>qqqq', 10, 11, 12, 13)
+
+  # Binary operations
+  bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
+  
+  # Finding and replacing (because of the MicroPython regex implementation)
+  bitstring.BitArray(hex='0x000001b3').findall('00')
+
+  # Probably lots of other things.
+ 
+There are also some "behind the scenes" changes.
+
 * Copied code from ``Error()`` class into derived classes to work-around
   ``TypeError: multiple bases have instance lay-out conflict`` problem.
 * MicroPython does not support slices with step not equal 1.
   ``NotImplementedError: only slices with step=1 (aka None) are supported``.
-* All related unit tests have been removed. The other tests use MicroPython
-  instead of CPython.
+* MicroPython does not support named groups in regular expressions so ``tokenparser()`` had
+  to be adjusted.
+* MicroPython ``bytes`` and ``bytearrays`` don't have a ``fromhex()`` class method so the
+  logic had to be re-written.
+* The original unittests won't work anymore. There is a simple ``tests/test-upython.py`` script
+  that checks some functionality.
 * I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
 
 Documentation
