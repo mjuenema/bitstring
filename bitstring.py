@@ -93,7 +93,7 @@ def _isinstance_integral(x):
 
 def _isinstance_iterable(x):
     # Replacement for _isinstance_iterable(x)
-    return isinstance(x, list) or isinstance(x, tuple)
+    return (isinstance(x, list) or isinstance(x, tuple)) and not isinstance(x, str)
 
 class Error(Exception):
     """Base class for errors in the bitstring module."""
@@ -108,18 +108,30 @@ class Error(Exception):
         return self.msg
 
 
-class ReadError(Error, IndexError):
+class ReadError(IndexError):
     """Reading or peeking past the end of a bitstring."""
 
     def __init__(self, *params):
-        Error.__init__(self, *params)
+        self.msg = params[0] if params else ''
+        self.params = params[1:]
+
+    def __str__(self):
+        if self.params:
+            return self.msg.format(*self.params)
+        return self.msg
 
 
-class InterpretError(Error, ValueError):
+class InterpretError(ValueError):
     """Inappropriate interpretation of binary data."""
 
     def __init__(self, *params):
-        Error.__init__(self, *params)
+        self.msg = params[0] if params else ''
+        self.params = params[1:]
+
+    def __str__(self):
+        if self.params:
+            return self.msg.format(*self.params)
+        return self.msg
 
 
 class ByteAlignError(Error):
@@ -129,11 +141,17 @@ class ByteAlignError(Error):
         Error.__init__(self, *params)
 
 
-class CreationError(Error, ValueError):
+class CreationError(ValueError):
     """Inappropriate argument during bitstring creation."""
 
     def __init__(self, *params):
-        Error.__init__(self, *params)
+        self.msg = params[0] if params else ''
+        self.params = params[1:]
+
+    def __str__(self):
+        if self.params:
+            return self.msg.format(*self.params)
+        return self.msg
 
 
 class ConstByteStore(object):
@@ -455,11 +473,11 @@ BYTE_REVERSAL_DICT = dict()
 try:
     xrange
     for i in range(256):
-        BYTE_REVERSAL_DICT[i] = chr(int("{0:08b}".format(i)[::-1], 2))
+        BYTE_REVERSAL_DICT[i] = chr(int("{0:08b}".format(i)[:-1], 2))
 except NameError:
     for i in range(256):
-        BYTE_REVERSAL_DICT[i] = bytes([int("{0:08b}".format(i)[::-1], 2)])
-    from io import IOBase as file
+        BYTE_REVERSAL_DICT[i] = bytes([int("{0:08b}".format(i)[:-1], 2)])
+    #from io import IOBase as file
     xrange = range
     basestring = str
 
@@ -518,11 +536,11 @@ def structparser(token):
     if not m:
         return [token]
     else:
-        endian = m.group('endian')
+        endian = m.group(1)
         if endian is None:
             return [token]
         # Split the format string into a list of 'q', '4h' etc.
-        formatlist = re.findall(STRUCT_SPLIT_RE, m.group('fmt'))
+        formatlist = re.findall(STRUCT_SPLIT_RE, m.group(2))
         # Now deal with mulitiplicative factors, 4h -> hhhh etc.
         fmt = ''.join([f[-1] * int(f[:-1]) if len(f) != 1 else
                        f for f in formatlist])
@@ -571,8 +589,8 @@ def tokenparser(fmt, keys=None, token_cache={}):
         if not m:
             factor = 1
         else:
-            factor = int(m.group('factor'))
-            meta_token = m.group('token')
+            factor = int(m.group(1))
+            meta_token = m.group(2)
         # See if it's a struct-like format
         tokens = structparser(meta_token)
         ret_vals = []
@@ -587,8 +605,8 @@ def tokenparser(fmt, keys=None, token_cache={}):
             # Match literal tokens of the form 0x... 0o... and 0b...
             m = LITERAL_RE.match(token)
             if m:
-                name = m.group('name')
-                value = m.group('value')
+                name = m.group(1)
+                value = m.group(2)
                 ret_vals.append([name, length, value])
                 continue
             # Match everything else:
@@ -599,16 +617,16 @@ def tokenparser(fmt, keys=None, token_cache={}):
                 if not m2:
                     raise ValueError("Don't understand token '{0}'.".format(token))
             if m1:
-                name = m1.group('name')
-                length = m1.group('len')
-                if m1.group('value'):
-                    value = m1.group('value')
+                name = m1.group(1)
+                length = m1.group(2)
+                if m1.group(3):
+                    value = m1.group(3)
             else:
                 assert m2
                 name = 'uint'
-                length = m2.group('len')
-                if m2.group('value'):
-                    value = m2.group('value')
+                length = m2.group(1)
+                if m2.group(2):
+                    value = m2.group(2)
             if name == 'bool':
                 if length is not None:
                     raise ValueError("You can't specify a length with bool tokens - they are always one bit.")
@@ -668,8 +686,8 @@ def expand_brackets(s):
         else:
             m = BRACKET_RE.search(s)
             if m:
-                factor = int(m.group('factor'))
-                matchstart = m.start('factor')
+                factor = int(m.group(1))
+                matchstart = m.start(1)
                 s = s[0:matchstart] + (factor - 1) * (s[start + 1:p] + ',') + s[start + 1:p] + s[p + 1:]
             else:
                 raise ValueError("Failed to parse '{0}'.".format(s))
@@ -971,19 +989,12 @@ class Bits(object):
 
         """
         length = self.len
-        if isinstance(self._datastore._rawarray, MmapByteArray):
-            offsetstring = ''
-            if self._datastore.byteoffset or self._offset:
-                offsetstring = ", offset=%d" % (self._datastore._rawarray.byteoffset * 8 + self._offset)
-            lengthstring = ", length=%d" % length
-            return "{0}(filename='{1}'{2}{3})".format(self.__class__.__name__,
-                    self._datastore._rawarray.source.name, lengthstring, offsetstring)
-        else:
-            s = self.__str__()
-            lengthstring = ''
-            if s.endswith('...'):
-                lengthstring = " # length={0}".format(length)
-            return "{0}('{1}'){2}".format(self.__class__.__name__, s, lengthstring)
+        #if isinstance(self._datastore._rawarray, MmapByteArray):
+        s = self.__str__()
+        lengthstring = ''
+        if s.endswith('...'):
+            lengthstring = " # length={0}".format(length)
+        return "{0}('{1}'){2}".format(self.__class__.__name__, s, lengthstring)
 
     def __eq__(self, bs):
         """Return True if two bitstrings have the same binary representation.
@@ -1262,19 +1273,19 @@ class Bits(object):
                 length = s.len - offset
             self._setbytes_unsafe(s._datastore.rawbytes, length, s._offset + offset)
             return
-        if isinstance(s, file):
-            if offset is None:
-                offset = 0
-            if length is None:
-                length = os.path.getsize(s.name) * 8 - offset
-            byteoffset, offset = divmod(offset, 8)
-            bytelength = (length + byteoffset * 8 + offset + 7) // 8 - byteoffset
-            m = MmapByteArray(s, bytelength, byteoffset)
-            if length + byteoffset * 8 + offset > m.filelength * 8:
-                raise CreationError("File is not long enough for specified "
-                                    "length and offset.")
-            self._datastore = ConstByteStore(m, length, offset)
-            return
+        #if isinstance(s, file):
+#            if offset is None:
+#                offset = 0
+#            if length is None:
+#                length = os.path.getsize(s.name) * 8 - offset
+#            byteoffset, offset = divmod(offset, 8)
+#            bytelength = (length + byteoffset * 8 + offset + 7) // 8 - byteoffset
+#            m = MmapByteArray(s, bytelength, byteoffset)
+#            if length + byteoffset * 8 + offset > m.filelength * 8:
+#                raise CreationError("File is not long enough for specified "
+#                                    "length and offset.")
+#            self._datastore = ConstByteStore(m, length, offset)
+#            return
         if length is not None:
             raise CreationError("The length keyword isn't applicable to this initialiser.")
         if offset:
@@ -1381,7 +1392,7 @@ class Bits(object):
         if len(s) & 1:
             s = '0' + s
         try:
-            data = bytes.fromhex(s)
+            data = bytes([int(x) for x in binascii.unhexlify(s)])
         except AttributeError:
             # the Python 2.x way
             data = binascii.unhexlify(s)
@@ -1915,8 +1926,10 @@ class Bits(object):
             hexstring += '0'
         try:
             try:
-                data = bytearray.fromhex(hexstring)
+#                data = bytearray.fromhex(hexstring)
+                data = bytearray([int(x) for x in binascii.unhexlify(hexstring)])
             except TypeError:
+                raise NotImplementedError('Python 2.x is not supported')
                 # Python 2.6 needs a unicode string (a bug). 2.7 and 3.x work fine.
                 data = bytearray.fromhex(unicode(hexstring))
         except ValueError:
@@ -3584,7 +3597,7 @@ class BitArray(Bits):
             if not m:
                 raise ValueError("Cannot parse format string {0}.".format(fmt))
             # Split the format string into a list of 'q', '4h' etc.
-            formatlist = re.findall(STRUCT_SPLIT_RE, m.group('fmt'))
+            formatlist = re.findall(STRUCT_SPLIT_RE, m.group(2))
             # Now deal with multiplicative factors, 4h -> hhhh etc.
             bytesizes = []
             for f in formatlist:
@@ -4017,7 +4030,7 @@ class BitArray(Bits):
 #
 #
 #
-#class BitStream(ConstBitStream, BitArray):
+#class bITStream(ConstBitStream, BitArray):
 #    """A container or stream holding a mutable sequence of bits
 #
 #    Subclass of the ConstBitStream and BitArray classes. Inherits all of
@@ -4244,8 +4257,8 @@ def pack(fmt, *values, **kwargs):
 
 # Aliases for backward compatibility
 ConstBitArray = Bits
-BitString = BitStream
+#BitString = BitStream
 
-__all__ = ['ConstBitArray', 'ConstBitStream', 'BitStream', 'BitArray',
-           'Bits', 'BitString', 'pack', 'Error', 'ReadError',
+__all__ = ['ConstBitArray', 'BitArray',
+           'Bits', 'pack', 'Error', 'ReadError',
            'InterpretError', 'ByteAlignError', 'CreationError', 'bytealigned']
