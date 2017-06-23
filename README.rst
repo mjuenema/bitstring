@@ -36,34 +36,32 @@ This version of **bitstring** has been edited to work with <https://micropython.
   
 What's working:
 
-```python
-# BitArray with keyword arguments
-bitstring.BitArray(int=32, length=7)
-bitstring.BitArray(intbe=-32768, length=16)
-bitstring.BitArray(float=10.3, length=32)
-bitstring.BitArray(floatle=-273.15, length=64)
-bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
-bitstring.BitArray(bool=True, bool=False)
-# ...and conversions
-bitstring.BitArray(int=32, length=7).bin
-bitstring.BitArray(int=32, length=7).tobytes()
-```
+.. code-block:: python
+  # BitArray with keyword arguments
+  bitstring.BitArray(int=32, length=7)
+  bitstring.BitArray(intbe=-32768, length=16)
+  bitstring.BitArray(float=10.3, length=32)
+  bitstring.BitArray(floatle=-273.15, length=64)
+  bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
+  bitstring.BitArray(bool=True, bool=False)
+  # ...and conversions
+  bitstring.BitArray(int=32, length=7).bin
+  bitstring.BitArray(int=32, length=7).tobytes()
 
 What's currently(!) not working because I(!!!) introduced bugs. As one can see there is a lot left to do.
 
-```python
-# Most variations of creating a BitArray
-bitstring.BitArray('0b001100')
-bitstring.BitArray('int:11=540')
+.. code-block:: python
+  # Most variations of creating a BitArray
+  bitstring.BitArray('0b001100')
+  bitstring.BitArray('int:11=540')
+  
+  # Packing
+  bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
 
-# Packing
-bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
+  # Bit operation
+  bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
 
-# Bit operation
-bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
-
-# Probably lots of other things.
-```
+  # Probably lots of other things.
   
 There are also some "behind the scenes" changes.
 
