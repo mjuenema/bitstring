@@ -30,6 +30,8 @@ This version of **bitstring** has been edited to work with <https://micropython.
   ``_isinstance_integral()`` which provide subset functionality.
 * The ``|=``, ``&=`` and ``^=`` operators are not supported as the **operator**
   module is missing from MicroPython.
+* Copied code from ``Error()`` class into derived classes to work-around
+  ``TypeError: multiple bases have instance lay-out conflict`` problem.
 * All related unit tests have been removed. The other tests use MicroPython
   instead of CPython.
 * I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
