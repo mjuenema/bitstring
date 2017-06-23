@@ -25,6 +25,7 @@ This version of **bitstring** has been edited to work with <https://micropython.
   be installed because it is missing from MicroPython.
 * The ``MmapByteArray()`` has been removed as there is no **mmap** module in
   MicroPython.
+* The ``ConstBitStream()``, ``BitStream()`` and ``BitString()`` classes have been removed.
 * References to the ``collections.Iterable`` and ``numbers.Integral`` have been
   replaced by calls to two functions ``_isinstance_iterable()`` and
   ``_isinstance_integral()`` which provide subset functionality.
