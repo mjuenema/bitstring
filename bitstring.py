@@ -59,9 +59,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-__version__ = "3.1.5"
+__version__ = "3.1.5-upython"
 
-__author__ = "Scott Griffiths"
+__author__ = "Scott Griffiths, Markus Juenemann"
 
 #import numbers
 import copy
