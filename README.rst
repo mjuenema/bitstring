@@ -21,6 +21,7 @@ MicroPython version
 
 This version of **bitstring** has been edited to work with <https://micropython.org/>.
 
+* Code supporting Python 2.6 may no longer work. 
 * The <https://github.com/micropython/micropython-lib/tree/master/copy> module must
   be installed because it is missing from MicroPython.
 * The ``MmapByteArray()`` has been removed as there is no **mmap** module in
@@ -32,12 +33,50 @@ This version of **bitstring** has been edited to work with <https://micropython.
   ``_isinstance_integral()`` which provide subset functionality.
 * The ``|=``, ``&=`` and ``^=`` operators are not supported as the **operator**
   module is missing from MicroPython.
+  
+What's working:
+
+```python
+# BitArray with keyword arguments
+bitstring.BitArray(int=32, length=7)
+bitstring.BitArray(intbe=-32768, length=16)
+bitstring.BitArray(float=10.3, length=32)
+bitstring.BitArray(floatle=-273.15, length=64)
+bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
+bitstring.BitArray(bool=True, bool=False)
+# ...and conversions
+bitstring.BitArray(int=32, length=7).bin
+bitstring.BitArray(int=32, length=7).tobytes()
+```
+
+What's currently(!) not working because I(!!!) introduced bugs. As one can see there is a lot left to do.
+
+```python
+# Most variations of creating a BitArray
+bitstring.BitArray('0b001100')
+bitstring.BitArray('int:11=540')
+
+# Packing
+bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
+
+# Bit operation
+bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
+
+# Probably lots of other things.
+```
+  
+There are also some "behind the scenes" changes.
+
 * Copied code from ``Error()`` class into derived classes to work-around
   ``TypeError: multiple bases have instance lay-out conflict`` problem.
 * MicroPython does not support slices with step not equal 1.
   ``NotImplementedError: only slices with step=1 (aka None) are supported``.
-* All related unit tests have been removed. The other tests use MicroPython
-  instead of CPython.
+* MicroPython does not support named groups in regular expressions so ``tokenparser()`` had
+  to be adjusted.
+* MicroPython ``bytes`` and ``bytearrays`` don't have a ``fromhex()`` class method so the
+  logic had to be re-written.
+* The original unittests won't work anymore. There is a simple ``tests/test-upython.py`` script
+  that checks some functionality.
 * I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
 
 Documentation
