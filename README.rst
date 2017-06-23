@@ -1,6 +1,6 @@
-================
-bitstring module
-================
+======================================
+bitstring module (MicroPython version)
+======================================
 
 **bitstring** is a pure Python module designed to help make
 the creation and analysis of binary data as simple and natural as possible.
@@ -15,6 +15,24 @@ bitstring is open source software, and has been released under the MIT
 licence.
 
 This module works in both Python 2.7 and Python 3.
+
+MicroPython version
+-------------------
+
+This version of **bitstring** has been edited to work with <https://micropython.org/>.
+
+* The <https://github.com/micropython/micropython-lib/tree/master/copy> module must
+  be installed because it is missing from MicroPython.
+* The ``MmapByteArray()`` has been removed as there is no **mmap** module in
+  MicroPython.
+* References to the ``collections.Iterable`` and ``numbers.Integral`` have been
+  replaced by calls to two functions ``_isinstance_iterable()`` and
+  ``_isinstance_integral()`` which provide subset functionality.
+* The ``|=``, ``&=`` and ``^=`` operators are not supported as the **operator**
+  module is missing from MicroPython.
+* All related unit tests have been removed. The other tests use MicroPython
+  instead of CPython.
+* I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
 
 Documentation
 -------------

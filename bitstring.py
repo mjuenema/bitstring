@@ -63,16 +63,16 @@ __version__ = "3.1.5"
 
 __author__ = "Scott Griffiths"
 
-import numbers
+#import numbers
 import copy
 import sys
 import re
 import binascii
-import mmap
+#import mmap
 import os
 import struct
-import operator
-import collections
+#import operator
+#import collections
 import array
 
 byteorder = sys.byteorder
@@ -84,7 +84,16 @@ bytealigned = False
 MAX_CHARS = 250
 
 # Maximum size of caches used for speed optimisations.
-CACHE_SIZE = 1000
+CACHE_SIZE = 10
+
+
+def _isinstance_integral(x):
+    # Replacement for _isinstance_integral(x)
+    return isinstance(x, int) or isinstance(x, float)
+
+def _isinstance_iterable(x):
+    # Replacement for _isinstance_iterable(x)
+    return isinstance(x, list) or isinstance(x, tuple)
 
 class Error(Exception):
     """Base class for errors in the bitstring module."""
@@ -391,50 +400,50 @@ def equal(a, b):
     return a_val == b_val
 
 
-class MmapByteArray(object):
-    """Looks like a bytearray, but from an mmap.
-
-    Not part of public interface.
-    """
-
-    __slots__ = ('filemap', 'filelength', 'source', 'byteoffset', 'bytelength')
-
-    def __init__(self, source, bytelength=None, byteoffset=None):
-        self.source = source
-        source.seek(0, os.SEEK_END)
-        self.filelength = source.tell()
-        if byteoffset is None:
-            byteoffset = 0
-        if bytelength is None:
-            bytelength = self.filelength - byteoffset
-        self.byteoffset = byteoffset
-        self.bytelength = bytelength
-        self.filemap = mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ)
-
-    def __getitem__(self, key):
-        try:
-            start = key.start
-            stop = key.stop
-        except AttributeError:
-            try:
-                assert 0 <= key < self.bytelength
-                return ord(self.filemap[key + self.byteoffset])
-            except TypeError:
-                # for Python 3
-                return self.filemap[key + self.byteoffset]
-        else:
-            if start is None:
-                start = 0
-            if stop is None:
-                stop = self.bytelength
-            assert key.step is None
-            assert 0 <= start < self.bytelength
-            assert 0 <= stop <= self.bytelength
-            s = slice(start + self.byteoffset, stop + self.byteoffset)
-            return bytearray(self.filemap.__getitem__(s))
-
-    def __len__(self):
-        return self.bytelength
+#class MmapByteArray(object):
+#    """Looks like a bytearray, but from an mmap.
+#
+#    Not part of public interface.
+#    """
+#
+#    __slots__ = ('filemap', 'filelength', 'source', 'byteoffset', 'bytelength')
+#
+#    def __init__(self, source, bytelength=None, byteoffset=None):
+#        self.source = source
+#        source.seek(0, os.SEEK_END)
+#        self.filelength = source.tell()
+#        if byteoffset is None:
+#            byteoffset = 0
+#        if bytelength is None:
+#            bytelength = self.filelength - byteoffset
+#        self.byteoffset = byteoffset
+#        self.bytelength = bytelength
+#        self.filemap = mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ)
+#
+#    def __getitem__(self, key):
+#        try:
+#            start = key.start
+#            stop = key.stop
+#        except AttributeError:
+#            try:
+#                assert 0 <= key < self.bytelength
+#                return ord(self.filemap[key + self.byteoffset])
+#            except TypeError:
+#                # for Python 3
+#                return self.filemap[key + self.byteoffset]
+#        else:
+#            if start is None:
+#                start = 0
+#            if stop is None:
+#                stop = self.bytelength
+#            assert key.step is None
+#            assert 0 <= start < self.bytelength
+#            assert 0 <= stop <= self.bytelength
+#            s = slice(start + self.byteoffset, stop + self.byteoffset)
+#            return bytearray(self.filemap.__getitem__(s))
+#
+#    def __len__(self):
+#        return self.bytelength
 
 
 # This creates a dictionary for every possible byte with the value being
@@ -1282,7 +1291,7 @@ class Bits(object):
             b = s.tostring()
             self._setbytes_unsafe(bytearray(b), len(b) * 8, 0)
             return
-        if isinstance(s, numbers.Integral):
+        if _isinstance_integral(s):
             # Initialise with s zero bits.
             if s < 0:
                 msg = "Can't create bitstring of negative length {0}."
@@ -1290,7 +1299,7 @@ class Bits(object):
             data = bytearray((s + 7) // 8)
             self._datastore = ByteStore(data, s, 0)
             return
-        if isinstance(s, collections.Iterable):
+        if _isinstance_iterable(s):
             # Evaluate each item as True or False and set bits to 1 or 0.
             self._setbin_unsafe(''.join(str(int(bool(x))) for x in s))
             return
@@ -2224,14 +2233,14 @@ class Bits(object):
             a[i] = f(a[i + self_byteoffset], b[i + bs_byteoffset])
         return self
 
-    def _ior(self, bs):
-        return self._inplace_logical_helper(bs, operator.ior)
-
-    def _iand(self, bs):
-        return self._inplace_logical_helper(bs, operator.iand)
-
-    def _ixor(self, bs):
-        return self._inplace_logical_helper(bs, operator.xor)
+#    def _ior(self, bs):
+#        return self._inplace_logical_helper(bs, operator.ior)
+#
+#    def _iand(self, bs):
+#        return self._inplace_logical_helper(bs, operator.iand)
+#
+#    def _ixor(self, bs):
+#        return self._inplace_logical_helper(bs, operator.xor)
 
     def _readbits(self, length, start):
         """Read some bits from the bitstring and return newly constructed bitstring."""
@@ -2280,7 +2289,7 @@ class Bits(object):
         # Not very optimal this, but replace integers with 'bits' tokens
         # TODO: optimise
         for i, f in enumerate(fmt):
-            if isinstance(f, numbers.Integral):
+            if _isinstance_integral(f):
                 fmt[i] = "bits:{0}".format(f)
         for f_item in fmt:
             stretchy, tkns = tokenparser(f_item, tuple(sorted(kwargs.keys())))
@@ -3105,7 +3114,7 @@ class BitArray(Bits):
                 key += self.len
             if not 0 <= key < self.len:
                 raise IndexError("Slice index out of range.")
-            if isinstance(value, numbers.Integral):
+            if _isinstance_integral(value):
                 if not value:
                     self._unset(key)
                     return
@@ -3136,7 +3145,7 @@ class BitArray(Bits):
 
             # If value is an integer then we want to set the slice to that
             # value rather than initialise a new bitstring of that length.
-            if not isinstance(value, numbers.Integral):
+            if not _isinstance_integral(value):
                 try:
                     # TODO: Better way than calling constructor here?
                     value = Bits(value)
@@ -3158,7 +3167,7 @@ class BitArray(Bits):
                 # The standard behaviour for lists is to just insert at the
                 # start position if stop < start and step == 1.
                 stop = start
-            if isinstance(value, numbers.Integral):
+            if _isinstance_integral(value):
                 if value >= 0:
                     value = self.__class__(uint=value, length=stop - start)
                 else:
@@ -3495,7 +3504,7 @@ class BitArray(Bits):
         if pos is None:
             self._invert_all()
             return
-        if not isinstance(pos, collections.Iterable):
+        if not _isinstance_iterable(pos):
             pos = (pos,)
         length = self.len
 
@@ -3566,7 +3575,7 @@ class BitArray(Bits):
         if fmt is None or fmt == 0:
             # reverse all of the whole bytes.
             bytesizes = [(end - start) // 8]
-        elif isinstance(fmt, numbers.Integral):
+        elif _isinstance_integral(fmt):
             if fmt < 0:
                 raise ValueError("Improper byte length {0}.".format(fmt))
             bytesizes = [fmt]
@@ -3583,10 +3592,10 @@ class BitArray(Bits):
                     bytesizes.append(PACK_CODE_SIZE[f])
                 else:
                     bytesizes.extend([PACK_CODE_SIZE[f[-1]]] * int(f[:-1]))
-        elif isinstance(fmt, collections.Iterable):
+        elif _isinstance_iterable(fmt):
             bytesizes = fmt
             for bytesize in bytesizes:
-                if not isinstance(bytesize, numbers.Integral) or bytesize < 0:
+                if not _isinstance_integral(bytesize) or bytesize < 0:
                     raise ValueError("Improper byte length {0}.".format(bytesize))
         else:
             raise TypeError("Format must be an integer, string or iterable.")
@@ -3684,479 +3693,479 @@ class BitArray(Bits):
 
 
 
-class ConstBitStream(Bits):
-    """A container or stream holding an immutable sequence of bits.
-
-    For a mutable container use the BitStream class instead.
-
-    Methods inherited from Bits:
-
-    all() -- Check if all specified bits are set to 1 or 0.
-    any() -- Check if any of specified bits are set to 1 or 0.
-    count() -- Count the number of bits set to 1 or 0.
-    cut() -- Create generator of constant sized chunks.
-    endswith() -- Return whether the bitstring ends with a sub-string.
-    find() -- Find a sub-bitstring in the current bitstring.
-    findall() -- Find all occurrences of a sub-bitstring in the current bitstring.
-    join() -- Join bitstrings together using current bitstring.
-    rfind() -- Seek backwards to find a sub-bitstring.
-    split() -- Create generator of chunks split by a delimiter.
-    startswith() -- Return whether the bitstring starts with a sub-bitstring.
-    tobytes() -- Return bitstring as bytes, padding if needed.
-    tofile() -- Write bitstring to file, padding if needed.
-    unpack() -- Interpret bits using format string.
-
-    Other methods:
-
-    bytealign() -- Align to next byte boundary.
-    peek() -- Peek at and interpret next bits as a single item.
-    peeklist() -- Peek at and interpret next bits as a list of items.
-    read() -- Read and interpret next bits as a single item.
-    readlist() -- Read and interpret next bits as a list of items.
-
-    Special methods:
-
-    Also available are the operators [], ==, !=, +, *, ~, <<, >>, &, |, ^.
-
-    Properties:
-
-    bin -- The bitstring as a binary string.
-    bool -- For single bit bitstrings, interpret as True or False.
-    bytepos -- The current byte position in the bitstring.
-    bytes -- The bitstring as a bytes object.
-    float -- Interpret as a floating point number.
-    floatbe -- Interpret as a big-endian floating point number.
-    floatle -- Interpret as a little-endian floating point number.
-    floatne -- Interpret as a native-endian floating point number.
-    hex -- The bitstring as a hexadecimal string.
-    int -- Interpret as a two's complement signed integer.
-    intbe -- Interpret as a big-endian signed integer.
-    intle -- Interpret as a little-endian signed integer.
-    intne -- Interpret as a native-endian signed integer.
-    len -- Length of the bitstring in bits.
-    oct -- The bitstring as an octal string.
-    pos -- The current bit position in the bitstring.
-    se -- Interpret as a signed exponential-Golomb code.
-    ue -- Interpret as an unsigned exponential-Golomb code.
-    sie -- Interpret as a signed interleaved exponential-Golomb code.
-    uie -- Interpret as an unsigned interleaved exponential-Golomb code.
-    uint -- Interpret as a two's complement unsigned integer.
-    uintbe -- Interpret as a big-endian unsigned integer.
-    uintle -- Interpret as a little-endian unsigned integer.
-    uintne -- Interpret as a native-endian unsigned integer.
-
-    """
-
-    __slots__ = ('_pos')
-
-    def __init__(self, auto=None, length=None, offset=None, **kwargs):
-        """Either specify an 'auto' initialiser:
-        auto -- a string of comma separated tokens, an integer, a file object,
-                a bytearray, a boolean iterable or another bitstring.
-
-        Or initialise via **kwargs with one (and only one) of:
-        bytes -- raw data as a string, for example read from a binary file.
-        bin -- binary string representation, e.g. '0b001010'.
-        hex -- hexadecimal string representation, e.g. '0x2ef'
-        oct -- octal string representation, e.g. '0o777'.
-        uint -- an unsigned integer.
-        int -- a signed integer.
-        float -- a floating point number.
-        uintbe -- an unsigned big-endian whole byte integer.
-        intbe -- a signed big-endian whole byte integer.
-        floatbe - a big-endian floating point number.
-        uintle -- an unsigned little-endian whole byte integer.
-        intle -- a signed little-endian whole byte integer.
-        floatle -- a little-endian floating point number.
-        uintne -- an unsigned native-endian whole byte integer.
-        intne -- a signed native-endian whole byte integer.
-        floatne -- a native-endian floating point number.
-        se -- a signed exponential-Golomb code.
-        ue -- an unsigned exponential-Golomb code.
-        sie -- a signed interleaved exponential-Golomb code.
-        uie -- an unsigned interleaved exponential-Golomb code.
-        bool -- a boolean (True or False).
-        filename -- a file which will be opened in binary read-only mode.
-
-        Other keyword arguments:
-        length -- length of the bitstring in bits, if needed and appropriate.
-                  It must be supplied for all integer and float initialisers.
-        offset -- bit offset to the data. These offset bits are
-                  ignored and this is intended for use when
-                  initialising using 'bytes' or 'filename'.
-
-        """
-        self._pos = 0
-
-    def __new__(cls, auto=None, length=None, offset=None, **kwargs):
-        x = super(ConstBitStream, cls).__new__(cls)
-        x._initialise(auto, length, offset, **kwargs)
-        return x
-
-    def _setbytepos(self, bytepos):
-        """Move to absolute byte-aligned position in stream."""
-        self._setbitpos(bytepos * 8)
-
-    def _getbytepos(self):
-        """Return the current position in the stream in bytes. Must be byte aligned."""
-        if self._pos % 8:
-            raise ByteAlignError("Not byte aligned in _getbytepos().")
-        return self._pos // 8
-
-    def _setbitpos(self, pos):
-        """Move to absolute postion bit in bitstream."""
-        if pos < 0:
-            raise ValueError("Bit position cannot be negative.")
-        if pos > self.len:
-            raise ValueError("Cannot seek past the end of the data.")
-        self._pos = pos
-
-    def _getbitpos(self):
-        """Return the current position in the stream in bits."""
-        return self._pos
-
-    def _clear(self):
-        Bits._clear(self)
-        self._pos = 0
-
-    def __copy__(self):
-        """Return a new copy of the ConstBitStream for the copy module."""
-        # Note that if you want a new copy (different ID), use _copy instead.
-        # The copy can use the same datastore as it's immutable.
-        s = ConstBitStream()
-        s._datastore = self._datastore
-        # Reset the bit position, don't copy it.
-        s._pos = 0
-        return s
-
-    def __add__(self, bs):
-        """Concatenate bitstrings and return new bitstring.
-
-        bs -- the bitstring to append.
-
-        """
-        s = Bits.__add__(self, bs)
-        s._pos = 0
-        return s
-
-    def read(self, fmt):
-        """Interpret next bits according to the format string and return result.
-
-        fmt -- Token string describing how to interpret the next bits.
-
-        Token examples: 'int:12'    : 12 bits as a signed integer
-                        'uint:8'    : 8 bits as an unsigned integer
-                        'float:64'  : 8 bytes as a big-endian float
-                        'intbe:16'  : 2 bytes as a big-endian signed integer
-                        'uintbe:16' : 2 bytes as a big-endian unsigned integer
-                        'intle:32'  : 4 bytes as a little-endian signed integer
-                        'uintle:32' : 4 bytes as a little-endian unsigned integer
-                        'floatle:64': 8 bytes as a little-endian float
-                        'intne:24'  : 3 bytes as a native-endian signed integer
-                        'uintne:24' : 3 bytes as a native-endian unsigned integer
-                        'floatne:32': 4 bytes as a native-endian float
-                        'hex:80'    : 80 bits as a hex string
-                        'oct:9'     : 9 bits as an octal string
-                        'bin:1'     : single bit binary string
-                        'ue'        : next bits as unsigned exp-Golomb code
-                        'se'        : next bits as signed exp-Golomb code
-                        'uie'       : next bits as unsigned interleaved exp-Golomb code
-                        'sie'       : next bits as signed interleaved exp-Golomb code
-                        'bits:5'    : 5 bits as a bitstring
-                        'bytes:10'  : 10 bytes as a bytes object
-                        'bool'      : 1 bit as a bool
-                        'pad:3'     : 3 bits of padding to ignore - returns None
-
-        fmt may also be an integer, which will be treated like the 'bits' token.
-
-        The position in the bitstring is advanced to after the read items.
-
-        Raises ReadError if not enough bits are available.
-        Raises ValueError if the format is not understood.
-
-        """
-        if isinstance(fmt, numbers.Integral):
-            if fmt < 0:
-                raise ValueError("Cannot read negative amount.")
-            if fmt > self.len - self._pos:
-                raise ReadError("Cannot read {0} bits, only {1} available.",
-                                fmt, self.len - self._pos)
-            bs = self._slice(self._pos, self._pos + fmt)
-            self._pos += fmt
-            return bs
-        p = self._pos
-        _, token = tokenparser(fmt)
-        if len(token) != 1:
-            self._pos = p
-            raise ValueError("Format string should be a single token, not {0} "
-                             "tokens - use readlist() instead.".format(len(token)))
-        name, length, _ = token[0]
-        if length is None:
-            length = self.len - self._pos
-        value, self._pos = self._readtoken(name, self._pos, length)
-        return value
-
-    def readlist(self, fmt, **kwargs):
-        """Interpret next bits according to format string(s) and return list.
-
-        fmt -- A single string or list of strings with comma separated tokens
-               describing how to interpret the next bits in the bitstring. Items
-               can also be integers, for reading new bitstring of the given length.
-        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
-                  format string will be replaced with their given value.
-
-        The position in the bitstring is advanced to after the read items.
-
-        Raises ReadError is not enough bits are available.
-        Raises ValueError if the format is not understood.
-
-        See the docstring for 'read' for token examples. 'pad' tokens are skipped
-        and not added to the returned list.
-
-        >>> h, b1, b2 = s.readlist('hex:20, bin:5, bin:3')
-        >>> i, bs1, bs2 = s.readlist(['uint:12', 10, 10])
-
-        """
-        value, self._pos = self._readlist(fmt, self._pos, **kwargs)
-        return value
-
-    def readto(self, bs, bytealigned=None):
-        """Read up to and including next occurrence of bs and return result.
-
-        bs -- The bitstring to find. An integer is not permitted.
-        bytealigned -- If True the bitstring will only be
-                       found on byte boundaries.
-
-        Raises ValueError if bs is empty.
-        Raises ReadError if bs is not found.
-
-        """
-        if isinstance(bs, numbers.Integral):
-            raise ValueError("Integers cannot be searched for")
-        bs = Bits(bs)
-        oldpos = self._pos
-        p = self.find(bs, self._pos, bytealigned=bytealigned)
-        if not p:
-            raise ReadError("Substring not found")
-        self._pos += bs.len
-        return self._slice(oldpos, self._pos)
-
-    def peek(self, fmt):
-        """Interpret next bits according to format string and return result.
-
-        fmt -- Token string describing how to interpret the next bits.
-
-        The position in the bitstring is not changed. If not enough bits are
-        available then all bits to the end of the bitstring will be used.
-
-        Raises ReadError if not enough bits are available.
-        Raises ValueError if the format is not understood.
-
-        See the docstring for 'read' for token examples.
-
-        """
-        pos_before = self._pos
-        value = self.read(fmt)
-        self._pos = pos_before
-        return value
-
-    def peeklist(self, fmt, **kwargs):
-        """Interpret next bits according to format string(s) and return list.
-
-        fmt -- One or more strings with comma separated tokens describing
-               how to interpret the next bits in the bitstring.
-        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
-                  format string will be replaced with their given value.
-
-        The position in the bitstring is not changed. If not enough bits are
-        available then all bits to the end of the bitstring will be used.
-
-        Raises ReadError if not enough bits are available.
-        Raises ValueError if the format is not understood.
-
-        See the docstring for 'read' for token examples.
-
-        """
-        pos = self._pos
-        return_values = self.readlist(fmt, **kwargs)
-        self._pos = pos
-        return return_values
-
-    def bytealign(self):
-        """Align to next byte and return number of skipped bits.
-
-        Raises ValueError if the end of the bitstring is reached before
-        aligning to the next byte.
-
-        """
-        skipped = (8 - (self._pos % 8)) % 8
-        self.pos += self._offset + skipped
-        assert self._assertsanity()
-        return skipped
-
-    pos = property(_getbitpos, _setbitpos,
-                   doc="""The position in the bitstring in bits. Read and write.
-                      """)
-    bitpos = property(_getbitpos, _setbitpos,
-                      doc="""The position in the bitstring in bits. Read and write.
-                      """)
-    bytepos = property(_getbytepos, _setbytepos,
-                       doc="""The position in the bitstring in bytes. Read and write.
-                      """)
-
-
-
-
-
-class BitStream(ConstBitStream, BitArray):
-    """A container or stream holding a mutable sequence of bits
-
-    Subclass of the ConstBitStream and BitArray classes. Inherits all of
-    their methods.
-
-    Methods:
-
-    all() -- Check if all specified bits are set to 1 or 0.
-    any() -- Check if any of specified bits are set to 1 or 0.
-    append() -- Append a bitstring.
-    bytealign() -- Align to next byte boundary.
-    byteswap() -- Change byte endianness in-place.
-    count() -- Count the number of bits set to 1 or 0.
-    cut() -- Create generator of constant sized chunks.
-    endswith() -- Return whether the bitstring ends with a sub-string.
-    find() -- Find a sub-bitstring in the current bitstring.
-    findall() -- Find all occurrences of a sub-bitstring in the current bitstring.
-    insert() -- Insert a bitstring.
-    invert() -- Flip bit(s) between one and zero.
-    join() -- Join bitstrings together using current bitstring.
-    overwrite() -- Overwrite a section with a new bitstring.
-    peek() -- Peek at and interpret next bits as a single item.
-    peeklist() -- Peek at and interpret next bits as a list of items.
-    prepend() -- Prepend a bitstring.
-    read() -- Read and interpret next bits as a single item.
-    readlist() -- Read and interpret next bits as a list of items.
-    replace() -- Replace occurrences of one bitstring with another.
-    reverse() -- Reverse bits in-place.
-    rfind() -- Seek backwards to find a sub-bitstring.
-    rol() -- Rotate bits to the left.
-    ror() -- Rotate bits to the right.
-    set() -- Set bit(s) to 1 or 0.
-    split() -- Create generator of chunks split by a delimiter.
-    startswith() -- Return whether the bitstring starts with a sub-bitstring.
-    tobytes() -- Return bitstring as bytes, padding if needed.
-    tofile() -- Write bitstring to file, padding if needed.
-    unpack() -- Interpret bits using format string.
-
-    Special methods:
-
-    Mutating operators are available: [], <<=, >>=, +=, *=, &=, |= and ^=
-    in addition to [], ==, !=, +, *, ~, <<, >>, &, | and ^.
-
-    Properties:
-
-    bin -- The bitstring as a binary string.
-    bool -- For single bit bitstrings, interpret as True or False.
-    bytepos -- The current byte position in the bitstring.
-    bytes -- The bitstring as a bytes object.
-    float -- Interpret as a floating point number.
-    floatbe -- Interpret as a big-endian floating point number.
-    floatle -- Interpret as a little-endian floating point number.
-    floatne -- Interpret as a native-endian floating point number.
-    hex -- The bitstring as a hexadecimal string.
-    int -- Interpret as a two's complement signed integer.
-    intbe -- Interpret as a big-endian signed integer.
-    intle -- Interpret as a little-endian signed integer.
-    intne -- Interpret as a native-endian signed integer.
-    len -- Length of the bitstring in bits.
-    oct -- The bitstring as an octal string.
-    pos -- The current bit position in the bitstring.
-    se -- Interpret as a signed exponential-Golomb code.
-    ue -- Interpret as an unsigned exponential-Golomb code.
-    sie -- Interpret as a signed interleaved exponential-Golomb code.
-    uie -- Interpret as an unsigned interleaved exponential-Golomb code.
-    uint -- Interpret as a two's complement unsigned integer.
-    uintbe -- Interpret as a big-endian unsigned integer.
-    uintle -- Interpret as a little-endian unsigned integer.
-    uintne -- Interpret as a native-endian unsigned integer.
-
-    """
-
-    __slots__ = ()
-
-    # As BitStream objects are mutable, we shouldn't allow them to be hashed.
-    __hash__ = None
-
-    def __init__(self, auto=None, length=None, offset=None, **kwargs):
-        """Either specify an 'auto' initialiser:
-        auto -- a string of comma separated tokens, an integer, a file object,
-                a bytearray, a boolean iterable or another bitstring.
-
-        Or initialise via **kwargs with one (and only one) of:
-        bytes -- raw data as a string, for example read from a binary file.
-        bin -- binary string representation, e.g. '0b001010'.
-        hex -- hexadecimal string representation, e.g. '0x2ef'
-        oct -- octal string representation, e.g. '0o777'.
-        uint -- an unsigned integer.
-        int -- a signed integer.
-        float -- a floating point number.
-        uintbe -- an unsigned big-endian whole byte integer.
-        intbe -- a signed big-endian whole byte integer.
-        floatbe - a big-endian floating point number.
-        uintle -- an unsigned little-endian whole byte integer.
-        intle -- a signed little-endian whole byte integer.
-        floatle -- a little-endian floating point number.
-        uintne -- an unsigned native-endian whole byte integer.
-        intne -- a signed native-endian whole byte integer.
-        floatne -- a native-endian floating point number.
-        se -- a signed exponential-Golomb code.
-        ue -- an unsigned exponential-Golomb code.
-        sie -- a signed interleaved exponential-Golomb code.
-        uie -- an unsigned interleaved exponential-Golomb code.
-        bool -- a boolean (True or False).
-        filename -- a file which will be opened in binary read-only mode.
-
-        Other keyword arguments:
-        length -- length of the bitstring in bits, if needed and appropriate.
-                  It must be supplied for all integer and float initialisers.
-        offset -- bit offset to the data. These offset bits are
-                  ignored and this is intended for use when
-                  initialising using 'bytes' or 'filename'.
-
-        """
-        self._pos = 0
-        # For mutable BitStreams we always read in files to memory:
-        if not isinstance(self._datastore, ByteStore):
-            self._ensureinmemory()
-
-    def __new__(cls, auto=None, length=None, offset=None, **kwargs):
-        x = super(BitStream, cls).__new__(cls)
-        x._initialise(auto, length, offset, **kwargs)
-        return x
-
-    def __copy__(self):
-        """Return a new copy of the BitStream."""
-        s_copy = BitStream()
-        s_copy._pos = 0
-        if not isinstance(self._datastore, ByteStore):
-            # Let them both point to the same (invariant) array.
-            # If either gets modified then at that point they'll be read into memory.
-            s_copy._datastore = self._datastore
-        else:
-            s_copy._datastore = ByteStore(self._datastore._rawarray[:],
-                                          self._datastore.bitlength,
-                                          self._datastore.offset)
-        return s_copy
-
-    def prepend(self, bs):
-        """Prepend a bitstring to the current bitstring.
-
-        bs -- The bitstring to prepend.
-
-        """
-        bs = self._converttobitstring(bs)
-        self._prepend(bs)
-        self._pos += bs.len
-
+#class ConstBitStream(Bits):
+#    """A container or stream holding an immutable sequence of bits.
+#
+#    For a mutable container use the BitStream class instead.
+#
+#    Methods inherited from Bits:
+#
+#    all() -- Check if all specified bits are set to 1 or 0.
+#    any() -- Check if any of specified bits are set to 1 or 0.
+#    count() -- Count the number of bits set to 1 or 0.
+#    cut() -- Create generator of constant sized chunks.
+#    endswith() -- Return whether the bitstring ends with a sub-string.
+#    find() -- Find a sub-bitstring in the current bitstring.
+#    findall() -- Find all occurrences of a sub-bitstring in the current bitstring.
+#    join() -- Join bitstrings together using current bitstring.
+#    rfind() -- Seek backwards to find a sub-bitstring.
+#    split() -- Create generator of chunks split by a delimiter.
+#    startswith() -- Return whether the bitstring starts with a sub-bitstring.
+#    tobytes() -- Return bitstring as bytes, padding if needed.
+#    tofile() -- Write bitstring to file, padding if needed.
+#    unpack() -- Interpret bits using format string.
+#
+#    Other methods:
+#
+#    bytealign() -- Align to next byte boundary.
+#    peek() -- Peek at and interpret next bits as a single item.
+#    peeklist() -- Peek at and interpret next bits as a list of items.
+#    read() -- Read and interpret next bits as a single item.
+#    readlist() -- Read and interpret next bits as a list of items.
+#
+#    Special methods:
+#
+#    Also available are the operators [], ==, !=, +, *, ~, <<, >>, &, |, ^.
+#
+#    Properties:
+#
+#    bin -- The bitstring as a binary string.
+#    bool -- For single bit bitstrings, interpret as True or False.
+#    bytepos -- The current byte position in the bitstring.
+#    bytes -- The bitstring as a bytes object.
+#    float -- Interpret as a floating point number.
+#    floatbe -- Interpret as a big-endian floating point number.
+#    floatle -- Interpret as a little-endian floating point number.
+#    floatne -- Interpret as a native-endian floating point number.
+#    hex -- The bitstring as a hexadecimal string.
+#    int -- Interpret as a two's complement signed integer.
+#    intbe -- Interpret as a big-endian signed integer.
+#    intle -- Interpret as a little-endian signed integer.
+#    intne -- Interpret as a native-endian signed integer.
+#    len -- Length of the bitstring in bits.
+#    oct -- The bitstring as an octal string.
+#    pos -- The current bit position in the bitstring.
+#    se -- Interpret as a signed exponential-Golomb code.
+#    ue -- Interpret as an unsigned exponential-Golomb code.
+#    sie -- Interpret as a signed interleaved exponential-Golomb code.
+#    uie -- Interpret as an unsigned interleaved exponential-Golomb code.
+#    uint -- Interpret as a two's complement unsigned integer.
+#    uintbe -- Interpret as a big-endian unsigned integer.
+#    uintle -- Interpret as a little-endian unsigned integer.
+#    uintne -- Interpret as a native-endian unsigned integer.
+#
+#    """
+#
+#    __slots__ = ('_pos')
+#
+#    def __init__(self, auto=None, length=None, offset=None, **kwargs):
+#        """Either specify an 'auto' initialiser:
+#        auto -- a string of comma separated tokens, an integer, a file object,
+#                a bytearray, a boolean iterable or another bitstring.
+#
+#        Or initialise via **kwargs with one (and only one) of:
+#        bytes -- raw data as a string, for example read from a binary file.
+#        bin -- binary string representation, e.g. '0b001010'.
+#        hex -- hexadecimal string representation, e.g. '0x2ef'
+#        oct -- octal string representation, e.g. '0o777'.
+#        uint -- an unsigned integer.
+#        int -- a signed integer.
+#        float -- a floating point number.
+#        uintbe -- an unsigned big-endian whole byte integer.
+#        intbe -- a signed big-endian whole byte integer.
+#        floatbe - a big-endian floating point number.
+#        uintle -- an unsigned little-endian whole byte integer.
+#        intle -- a signed little-endian whole byte integer.
+#        floatle -- a little-endian floating point number.
+#        uintne -- an unsigned native-endian whole byte integer.
+#        intne -- a signed native-endian whole byte integer.
+#        floatne -- a native-endian floating point number.
+#        se -- a signed exponential-Golomb code.
+#        ue -- an unsigned exponential-Golomb code.
+#        sie -- a signed interleaved exponential-Golomb code.
+#        uie -- an unsigned interleaved exponential-Golomb code.
+#        bool -- a boolean (True or False).
+#        filename -- a file which will be opened in binary read-only mode.
+#
+#        Other keyword arguments:
+#        length -- length of the bitstring in bits, if needed and appropriate.
+#                  It must be supplied for all integer and float initialisers.
+#        offset -- bit offset to the data. These offset bits are
+#                  ignored and this is intended for use when
+#                  initialising using 'bytes' or 'filename'.
+#
+#        """
+#        self._pos = 0
+#
+#    def __new__(cls, auto=None, length=None, offset=None, **kwargs):
+#        x = super(ConstBitStream, cls).__new__(cls)
+#        x._initialise(auto, length, offset, **kwargs)
+#        return x
+#
+#    def _setbytepos(self, bytepos):
+#        """Move to absolute byte-aligned position in stream."""
+#        self._setbitpos(bytepos * 8)
+#
+#    def _getbytepos(self):
+#        """Return the current position in the stream in bytes. Must be byte aligned."""
+#        if self._pos % 8:
+#            raise ByteAlignError("Not byte aligned in _getbytepos().")
+#        return self._pos // 8
+#
+#    def _setbitpos(self, pos):
+#        """Move to absolute postion bit in bitstream."""
+#        if pos < 0:
+#            raise ValueError("Bit position cannot be negative.")
+#        if pos > self.len:
+#            raise ValueError("Cannot seek past the end of the data.")
+#        self._pos = pos
+#
+#    def _getbitpos(self):
+#        """Return the current position in the stream in bits."""
+#        return self._pos
+#
+#    def _clear(self):
+#        Bits._clear(self)
+#        self._pos = 0
+#
+#    def __copy__(self):
+#        """Return a new copy of the ConstBitStream for the copy module."""
+#        # Note that if you want a new copy (different ID), use _copy instead.
+#        # The copy can use the same datastore as it's immutable.
+#        s = ConstBitStream()
+#        s._datastore = self._datastore
+#        # Reset the bit position, don't copy it.
+#        s._pos = 0
+#        return s
+#
+#    def __add__(self, bs):
+#        """Concatenate bitstrings and return new bitstring.
+#
+#        bs -- the bitstring to append.
+#
+#        """
+#        s = Bits.__add__(self, bs)
+#        s._pos = 0
+#        return s
+#
+#    def read(self, fmt):
+#        """Interpret next bits according to the format string and return result.
+#
+#        fmt -- Token string describing how to interpret the next bits.
+#
+#        Token examples: 'int:12'    : 12 bits as a signed integer
+#                        'uint:8'    : 8 bits as an unsigned integer
+#                        'float:64'  : 8 bytes as a big-endian float
+#                        'intbe:16'  : 2 bytes as a big-endian signed integer
+#                        'uintbe:16' : 2 bytes as a big-endian unsigned integer
+#                        'intle:32'  : 4 bytes as a little-endian signed integer
+#                        'uintle:32' : 4 bytes as a little-endian unsigned integer
+#                        'floatle:64': 8 bytes as a little-endian float
+#                        'intne:24'  : 3 bytes as a native-endian signed integer
+#                        'uintne:24' : 3 bytes as a native-endian unsigned integer
+#                        'floatne:32': 4 bytes as a native-endian float
+#                        'hex:80'    : 80 bits as a hex string
+#                        'oct:9'     : 9 bits as an octal string
+#                        'bin:1'     : single bit binary string
+#                        'ue'        : next bits as unsigned exp-Golomb code
+#                        'se'        : next bits as signed exp-Golomb code
+#                        'uie'       : next bits as unsigned interleaved exp-Golomb code
+#                        'sie'       : next bits as signed interleaved exp-Golomb code
+#                        'bits:5'    : 5 bits as a bitstring
+#                        'bytes:10'  : 10 bytes as a bytes object
+#                        'bool'      : 1 bit as a bool
+#                        'pad:3'     : 3 bits of padding to ignore - returns None
+#
+#        fmt may also be an integer, which will be treated like the 'bits' token.
+#
+#        The position in the bitstring is advanced to after the read items.
+#
+#        Raises ReadError if not enough bits are available.
+#        Raises ValueError if the format is not understood.
+#
+#        """
+#        if _isinstance_integral(fmt):
+#            if fmt < 0:
+#                raise ValueError("Cannot read negative amount.")
+#            if fmt > self.len - self._pos:
+#                raise ReadError("Cannot read {0} bits, only {1} available.",
+#                                fmt, self.len - self._pos)
+#            bs = self._slice(self._pos, self._pos + fmt)
+#            self._pos += fmt
+#            return bs
+#        p = self._pos
+#        _, token = tokenparser(fmt)
+#        if len(token) != 1:
+#            self._pos = p
+#            raise ValueError("Format string should be a single token, not {0} "
+#                             "tokens - use readlist() instead.".format(len(token)))
+#        name, length, _ = token[0]
+#        if length is None:
+#            length = self.len - self._pos
+#        value, self._pos = self._readtoken(name, self._pos, length)
+#        return value
+#
+#    def readlist(self, fmt, **kwargs):
+#        """Interpret next bits according to format string(s) and return list.
+#
+#        fmt -- A single string or list of strings with comma separated tokens
+#               describing how to interpret the next bits in the bitstring. Items
+#               can also be integers, for reading new bitstring of the given length.
+#        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
+#                  format string will be replaced with their given value.
+#
+#        The position in the bitstring is advanced to after the read items.
+#
+#        Raises ReadError is not enough bits are available.
+#        Raises ValueError if the format is not understood.
+#
+#        See the docstring for 'read' for token examples. 'pad' tokens are skipped
+#        and not added to the returned list.
+#
+#        >>> h, b1, b2 = s.readlist('hex:20, bin:5, bin:3')
+#        >>> i, bs1, bs2 = s.readlist(['uint:12', 10, 10])
+#
+#        """
+#        value, self._pos = self._readlist(fmt, self._pos, **kwargs)
+#        return value
+#
+#    def readto(self, bs, bytealigned=None):
+#        """Read up to and including next occurrence of bs and return result.
+#
+#        bs -- The bitstring to find. An integer is not permitted.
+#        bytealigned -- If True the bitstring will only be
+#                       found on byte boundaries.
+#
+#        Raises ValueError if bs is empty.
+#        Raises ReadError if bs is not found.
+#
+#        """
+#        if _isinstance_integral(bs):
+#            raise ValueError("Integers cannot be searched for")
+#        bs = Bits(bs)
+#        oldpos = self._pos
+#        p = self.find(bs, self._pos, bytealigned=bytealigned)
+#        if not p:
+#            raise ReadError("Substring not found")
+#        self._pos += bs.len
+#        return self._slice(oldpos, self._pos)
+#
+#    def peek(self, fmt):
+#        """Interpret next bits according to format string and return result.
+#
+#        fmt -- Token string describing how to interpret the next bits.
+#
+#        The position in the bitstring is not changed. If not enough bits are
+#        available then all bits to the end of the bitstring will be used.
+#
+#        Raises ReadError if not enough bits are available.
+#        Raises ValueError if the format is not understood.
+#
+#        See the docstring for 'read' for token examples.
+#
+#        """
+#        pos_before = self._pos
+#        value = self.read(fmt)
+#        self._pos = pos_before
+#        return value
+#
+#    def peeklist(self, fmt, **kwargs):
+#        """Interpret next bits according to format string(s) and return list.
+#
+#        fmt -- One or more strings with comma separated tokens describing
+#               how to interpret the next bits in the bitstring.
+#        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
+#                  format string will be replaced with their given value.
+#
+#        The position in the bitstring is not changed. If not enough bits are
+#        available then all bits to the end of the bitstring will be used.
+#
+#        Raises ReadError if not enough bits are available.
+#        Raises ValueError if the format is not understood.
+#
+#        See the docstring for 'read' for token examples.
+#
+#        """
+#        pos = self._pos
+#        return_values = self.readlist(fmt, **kwargs)
+#        self._pos = pos
+#        return return_values
+#
+#    def bytealign(self):
+#        """Align to next byte and return number of skipped bits.
+#
+#        Raises ValueError if the end of the bitstring is reached before
+#        aligning to the next byte.
+#
+#        """
+#        skipped = (8 - (self._pos % 8)) % 8
+#        self.pos += self._offset + skipped
+#        assert self._assertsanity()
+#        return skipped
+#
+#    pos = property(_getbitpos, _setbitpos,
+#                   doc="""The position in the bitstring in bits. Read and write.
+#                      """)
+#    bitpos = property(_getbitpos, _setbitpos,
+#                      doc="""The position in the bitstring in bits. Read and write.
+#                      """)
+#    bytepos = property(_getbytepos, _setbytepos,
+#                       doc="""The position in the bitstring in bytes. Read and write.
+#                      """)
+#
+#
+#
+#
+#
+#class BitStream(ConstBitStream, BitArray):
+#    """A container or stream holding a mutable sequence of bits
+#
+#    Subclass of the ConstBitStream and BitArray classes. Inherits all of
+#    their methods.
+#
+#    Methods:
+#
+#    all() -- Check if all specified bits are set to 1 or 0.
+#    any() -- Check if any of specified bits are set to 1 or 0.
+#    append() -- Append a bitstring.
+#    bytealign() -- Align to next byte boundary.
+#    byteswap() -- Change byte endianness in-place.
+#    count() -- Count the number of bits set to 1 or 0.
+#    cut() -- Create generator of constant sized chunks.
+#    endswith() -- Return whether the bitstring ends with a sub-string.
+#    find() -- Find a sub-bitstring in the current bitstring.
+#    findall() -- Find all occurrences of a sub-bitstring in the current bitstring.
+#    insert() -- Insert a bitstring.
+#    invert() -- Flip bit(s) between one and zero.
+#    join() -- Join bitstrings together using current bitstring.
+#    overwrite() -- Overwrite a section with a new bitstring.
+#    peek() -- Peek at and interpret next bits as a single item.
+#    peeklist() -- Peek at and interpret next bits as a list of items.
+#    prepend() -- Prepend a bitstring.
+#    read() -- Read and interpret next bits as a single item.
+#    readlist() -- Read and interpret next bits as a list of items.
+#    replace() -- Replace occurrences of one bitstring with another.
+#    reverse() -- Reverse bits in-place.
+#    rfind() -- Seek backwards to find a sub-bitstring.
+#    rol() -- Rotate bits to the left.
+#    ror() -- Rotate bits to the right.
+#    set() -- Set bit(s) to 1 or 0.
+#    split() -- Create generator of chunks split by a delimiter.
+#    startswith() -- Return whether the bitstring starts with a sub-bitstring.
+#    tobytes() -- Return bitstring as bytes, padding if needed.
+#    tofile() -- Write bitstring to file, padding if needed.
+#    unpack() -- Interpret bits using format string.
+#
+#    Special methods:
+#
+#    Mutating operators are available: [], <<=, >>=, +=, *=, &=, |= and ^=
+#    in addition to [], ==, !=, +, *, ~, <<, >>, &, | and ^.
+#
+#    Properties:
+#
+#    bin -- The bitstring as a binary string.
+#    bool -- For single bit bitstrings, interpret as True or False.
+#    bytepos -- The current byte position in the bitstring.
+#    bytes -- The bitstring as a bytes object.
+#    float -- Interpret as a floating point number.
+#    floatbe -- Interpret as a big-endian floating point number.
+#    floatle -- Interpret as a little-endian floating point number.
+#    floatne -- Interpret as a native-endian floating point number.
+#    hex -- The bitstring as a hexadecimal string.
+#    int -- Interpret as a two's complement signed integer.
+#    intbe -- Interpret as a big-endian signed integer.
+#    intle -- Interpret as a little-endian signed integer.
+#    intne -- Interpret as a native-endian signed integer.
+#    len -- Length of the bitstring in bits.
+#    oct -- The bitstring as an octal string.
+#    pos -- The current bit position in the bitstring.
+#    se -- Interpret as a signed exponential-Golomb code.
+#    ue -- Interpret as an unsigned exponential-Golomb code.
+#    sie -- Interpret as a signed interleaved exponential-Golomb code.
+#    uie -- Interpret as an unsigned interleaved exponential-Golomb code.
+#    uint -- Interpret as a two's complement unsigned integer.
+#    uintbe -- Interpret as a big-endian unsigned integer.
+#    uintle -- Interpret as a little-endian unsigned integer.
+#    uintne -- Interpret as a native-endian unsigned integer.
+#
+#    """
+#
+#    __slots__ = ()
+#
+#    # As BitStream objects are mutable, we shouldn't allow them to be hashed.
+#    __hash__ = None
+#
+#    def __init__(self, auto=None, length=None, offset=None, **kwargs):
+#        """Either specify an 'auto' initialiser:
+#        auto -- a string of comma separated tokens, an integer, a file object,
+#                a bytearray, a boolean iterable or another bitstring.
+#
+#        Or initialise via **kwargs with one (and only one) of:
+#        bytes -- raw data as a string, for example read from a binary file.
+#        bin -- binary string representation, e.g. '0b001010'.
+#        hex -- hexadecimal string representation, e.g. '0x2ef'
+#        oct -- octal string representation, e.g. '0o777'.
+#        uint -- an unsigned integer.
+#        int -- a signed integer.
+#        float -- a floating point number.
+#        uintbe -- an unsigned big-endian whole byte integer.
+#        intbe -- a signed big-endian whole byte integer.
+#        floatbe - a big-endian floating point number.
+#        uintle -- an unsigned little-endian whole byte integer.
+#        intle -- a signed little-endian whole byte integer.
+#        floatle -- a little-endian floating point number.
+#        uintne -- an unsigned native-endian whole byte integer.
+#        intne -- a signed native-endian whole byte integer.
+#        floatne -- a native-endian floating point number.
+#        se -- a signed exponential-Golomb code.
+#        ue -- an unsigned exponential-Golomb code.
+#        sie -- a signed interleaved exponential-Golomb code.
+#        uie -- an unsigned interleaved exponential-Golomb code.
+#        bool -- a boolean (True or False).
+#        filename -- a file which will be opened in binary read-only mode.
+#
+#        Other keyword arguments:
+#        length -- length of the bitstring in bits, if needed and appropriate.
+#                  It must be supplied for all integer and float initialisers.
+#        offset -- bit offset to the data. These offset bits are
+#                  ignored and this is intended for use when
+#                  initialising using 'bytes' or 'filename'.
+#
+#        """
+#        self._pos = 0
+#        # For mutable BitStreams we always read in files to memory:
+#        if not isinstance(self._datastore, ByteStore):
+#            self._ensureinmemory()
+#
+#    def __new__(cls, auto=None, length=None, offset=None, **kwargs):
+#        x = super(BitStream, cls).__new__(cls)
+#        x._initialise(auto, length, offset, **kwargs)
+#        return x
+#
+#    def __copy__(self):
+#        """Return a new copy of the BitStream."""
+#        s_copy = BitStream()
+#        s_copy._pos = 0
+#        if not isinstance(self._datastore, ByteStore):
+#            # Let them both point to the same (invariant) array.
+#            # If either gets modified then at that point they'll be read into memory.
+#            s_copy._datastore = self._datastore
+#        else:
+#            s_copy._datastore = ByteStore(self._datastore._rawarray[:],
+#                                          self._datastore.bitlength,
+#                                          self._datastore.offset)
+#        return s_copy
+#
+#    def prepend(self, bs):
+#        """Prepend a bitstring to the current bitstring.
+#
+#        bs -- The bitstring to prepend.
+#
+#        """
+#        bs = self._converttobitstring(bs)
+#        self._prepend(bs)
+#        self._pos += bs.len
+#
 
 def pack(fmt, *values, **kwargs):
     """Pack the values according to the format string and return a new BitStream.
