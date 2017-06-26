@@ -17,11 +17,11 @@ install:
   - make -C /tmp/micropython/unix axtls
   - make -C /tmp/micropython/unix
   - /tmp/micropython/unix/micropython -m upip install micropython-upip
-  - /tmp/micropython/unix/micropython -m upip install micropython-copy \
-                                                      micropython-binascii \
-                                                      micropython-struct \
-                                                      micropython-unittest \
-                                                      micropython-types
+  - /tmp/micropython/unix/micropython -m upip install micropython-copy
+  - /tmp/micropython/unix/micropython -m upip install micropython-binascii
+  - /tmp/micropython/unix/micropython -m upip install micropython-struct
+  - /tmp/micropython/unix/micropython -m upip install micropython-unittest
+  - /tmp/micropython/unix/micropython -m upip install micropython-types
 
 script:
   - /tmp/micropython/unix/micropython test/test_bitstore.py
