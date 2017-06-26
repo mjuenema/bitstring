@@ -9,7 +9,7 @@ with the original Bitstring module.
 
 Example::
 
-    from bitstring import Bits
+    from ubitstring import Bits
     s = Bits(float=3.1415, length=32) + Bits(uint=15, length=4) + Bits(bool=True)
     assert len(s) == 32 + 4 + 1
 
@@ -17,7 +17,7 @@ Example::
 The Bits class
 -----------------------
 
-The ``Bits`` class is a simplified version of the Bits_ of the same name
+The ``Bits`` class is a simplified version of the Bits_ class of the same name
 of the original Bitstring package. The focus is on the *creation* of
 binary strings, for instance in IoT devices.
 
