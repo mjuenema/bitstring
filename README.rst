@@ -62,5 +62,5 @@ Copyright (c) 2016 Scott Griffiths
 For more information see the project's homepage on GitHub:
 <https://github.com/scott-griffiths/bitstring>
 
-The MicroPython version has been patched together by Markus Juenemann: 
+The MicroPython version has been created by Markus Juenemann: 
 <https://github.com/mjuenema/micropython-bitstring>
