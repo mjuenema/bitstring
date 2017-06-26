@@ -58,7 +58,7 @@ import copy
 import sys
 import binascii
 import struct
-import array
+##import array
 
 byteorder = sys.byteorder
 
