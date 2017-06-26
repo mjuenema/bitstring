@@ -364,6 +364,38 @@ class ConstByteStoreCreation(unittest.TestCase):
 #        self.assertEqual(x, [])
 
 
+class Misc(unittest.TestCase):
+    """Tests for MicroPython."""
+
+    def testMisc(self):
+        a = Bits(int=-31111, length=32)
+        b = Bits(int=-31111, length=32)
+
+        assert a.len == 32
+
+        assert a.int == -31111
+        assert a.hex == 'ffff8679'
+        assert a.bin == '11111111111111111000011001111001'
+        assert a.bytes == b'\xff\xff\x86y'
+
+        assert a.all(True, [1,2,3,4]) is True
+        assert a.all(True, [30]) is False
+
+        assert a.any(True, [0,30]) is True
+        assert a.any(True, [29,30]) is False
+
+        assert a.count(1) == 24
+        assert a.count(0) == 8
+
+        assert a.tobytes() == b'\xff\xff\x86y'
+        assert a[-4:].bin == '1001'
+
+        assert a == b
+
+        c = a + b
+        assert c.hex == 'ffff8679ffff8679'
+
+
 class ModifiedByAddingBug(unittest.TestCase):
 
     def testAdding(self):
