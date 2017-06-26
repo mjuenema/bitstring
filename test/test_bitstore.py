@@ -2,6 +2,7 @@
 
 import unittest
 import sys
+sys.path.insert(0, '')
 sys.path.insert(0, '..')
 from bitstring import ByteStore, ConstByteStore, equal, offsetcopy
 
@@ -35,3 +36,7 @@ class Equals(unittest.TestCase):
         t = ByteStore(bytearray([64]), 2, 1)
         self.assertTrue(equal(s, t))
         self.assertTrue(equal(t, s))
+
+if __name__ == '__main__':
+    unittest.main()
+
