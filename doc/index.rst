@@ -1,5 +1,3 @@
-.. currentmodule:: bitstring
-
 **micropython-bitstring** is a very stripped-down version of the Bitstring_ package
 by Scott Griffiths that works with MicroPython. It defines a single class ``Bits``
 for the *creation* of binary strings.
@@ -16,12 +14,12 @@ Example::
 The Bits class
 -----------------------
 
-The :class:`Bits` class is a simplified version of the class of the same name
+The ``Bits`` class is a simplified version of the class of the same name
 of the original Bitstring_ package.
 
 The key differences are
 * the ``auto`` and ``filename`` keyword argument have been removed.
-* the :method:`*find()` and :method:`cut()` methods have been removed.
+* the ``*find()`` and ``cut()`` methods have been removed.
 * most methods are currently untested.
 
 .. class:: Bits([auto, length, offset, **kwargs])
