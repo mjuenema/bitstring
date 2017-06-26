@@ -56,11 +56,8 @@ __author__ = "Scott Griffiths, Markus Juenemann"
 
 import copy
 import sys
-import re
 import binascii
-import os
 import struct
-import array
 
 byteorder = sys.byteorder
 
@@ -431,21 +428,6 @@ INIT_NAMES = ('uint', 'int', 'ue', 'se', 'sie', 'uie', 'hex', 'oct', 'bin', 'bit
               'uintbe', 'intbe', 'uintle', 'intle', 'uintne', 'intne',
               'float', 'floatbe', 'floatle', 'floatne', 'bytes', 'bool', 'pad')
 
-TOKEN_RE = re.compile(r'(?P<name>' + '|'.join(INIT_NAMES) +
-                      r')((:(?P<len>[^=]+)))?(=(?P<value>.*))?$', re.IGNORECASE)
-DEFAULT_UINT = re.compile(r'(?P<len>[^=]+)?(=(?P<value>.*))?$', re.IGNORECASE)
-
-MULTIPLICATIVE_RE = re.compile(r'(?P<factor>.*)\*(?P<token>.+)')
-
-# Hex, oct or binary literals
-LITERAL_RE = re.compile(r'(?P<name>0(x|o|b))(?P<value>.+)', re.IGNORECASE)
-
-# An endianness indicator followed by one or more struct.pack codes
-STRUCT_PACK_RE = re.compile(r'(?P<endian><|>|@)?(?P<fmt>(?:\d*[bBhHlLqQfd])+)$')
-
-# A number followed by a single character struct.pack code
-STRUCT_SPLIT_RE = re.compile(r'\d*[bBhHlLqQfd]')
-
 # These replicate the struct.pack codes
 # Big-endian
 REPLACEMENTS_BE = {'b': 'intbe:8', 'B': 'uintbe:8',
@@ -467,11 +449,6 @@ PACK_CODE_SIZE = {'b': 1, 'B': 1, 'h': 2, 'H': 2, 'l': 4, 'L': 4,
 _tokenname_to_initialiser = {'hex': 'hex', '0x': 'hex', '0X': 'hex', 'oct': 'oct',
                              '0o': 'oct', '0O': 'oct', 'bin': 'bin', '0b': 'bin',
                              '0B': 'bin', 'bits': 'auto', 'bytes': 'bytes', 'pad': 'pad'}
-
-
-
-# Looks for first number*(
-BRACKET_RE = re.compile(r'(?P<factor>\d+)\*\(')
 
 
 
@@ -796,21 +773,6 @@ class Bits(object):
         """Reset the bitstring to an empty state."""
         self._datastore = ByteStore(bytearray(0))
 
-
-    def _setfile(self, filename, length, offset):
-        """Use file as source of bits."""
-        source = open(filename, 'rb')
-        if offset is None:
-            offset = 0
-        if length is None:
-            length = os.path.getsize(source.name) * 8 - offset
-        byteoffset, offset = divmod(offset, 8)
-        bytelength = (length + byteoffset * 8 + offset + 7) // 8 - byteoffset
-        m = MmapByteArray(source, bytelength, byteoffset)
-        if length + byteoffset * 8 + offset > m.filelength * 8:
-            raise CreationError("File is not long enough for specified "
-                                "length and offset.")
-        self._datastore = ConstByteStore(m, length, offset)
 
     def _setbytes_safe(self, data, length=None, offset=0):
         """Set the data from a string."""
@@ -1999,7 +1961,6 @@ name_to_read = {'uint': Bits._readuint,
 
 # Dictionaries for mapping init keywords with init functions.
 init_with_length_and_offset = {'bytes': Bits._setbytes_safe,
-                               'filename': Bits._setfile,
                                }
 
 init_with_length_only = {'uint': Bits._setuint,
