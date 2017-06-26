@@ -17,7 +17,6 @@ install:
   - make -C /tmp/micropython/unix axtls
   - make -C /tmp/micropython/unix
   - /tmp/micropython/unix/micropython -m upip install micropython-copy \
-                                                      micropython-re-pcre \
                                                       micropython-binascii \
                                                       micropython-os \
                                                       micropython-struct \
