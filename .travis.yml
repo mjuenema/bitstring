@@ -16,9 +16,9 @@ install:
   - git clone --recurse-submodules https://github.com/micropython/micropython.git /tmp/micropython
   - make -C /tmp/micropython/unix axtls
   - make -C /tmp/micropython/unix
+  - /tmp/micropython/unix/micropython -m upip install micropython-upip
   - /tmp/micropython/unix/micropython -m upip install micropython-copy \
                                                       micropython-binascii \
-                                                      micropython-os \
                                                       micropython-struct \
                                                       micropython-unittest \
                                                       micropython-types

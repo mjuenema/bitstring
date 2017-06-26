@@ -31,6 +31,6 @@ setup(name='micropython-bitstring',
         'Programming Language :: Python :: Implementation :: MicroPython',
         'Topic :: Software Development :: Libraries :: Python Modules'
       ],
-      install_requires=['micropython-copy','micropython-binascii','micropython-os','micropython-struct','micropython-types'],
+      install_requires=['micropython-copy','micropython-binascii','micropython-struct','micropython-types'],
       **kwds
       )
