@@ -2,176 +2,57 @@
 bitstring module (MicroPython version)
 ======================================
 
-**bitstring** is a pure Python module designed to help make
-the creation and analysis of binary data as simple and natural as possible.
+**micropython-bitstring** is a stripped-down version of the Bitstring package by Scott Griffiths
+that works with MicroPython. It defines a single class ``Bits`` for the creation
+of binary strings. Binary strings created with this module are compatible
+with the original Bitstring module.
 
-Bitstrings can be constructed from integers (big and little endian), hex,
-octal, binary, strings or files. They can be sliced, joined, reversed,
-inserted into, overwritten, etc. with simple functions or slice notation.
-They can also be read from, searched and replaced, and navigated in,
-similar to a file or stream.
+Example::
 
-bitstring is open source software, and has been released under the MIT
-licence.
-
-This module works in MicroPython.
-
-MicroPython version
--------------------
-
-This version of **bitstring** has been edited to work with <https://micropython.org/>.
-
-* Code supporting Python 2.6 may no longer work. 
-* The <https://github.com/micropython/micropython-lib/tree/master/copy> module must
-  be installed because it is missing from MicroPython.
-* The ``MmapByteArray()`` has been removed as there is no **mmap** module in
-  MicroPython.
-* The ``ConstBitStream()``, ``BitStream()`` and ``BitString()`` classes have been removed.
-* Creating bit strings from file object is not supported.
-* References to the ``collections.Iterable`` and ``numbers.Integral`` have been
-  replaced by calls to two functions ``_isinstance_iterable()`` and
-  ``_isinstance_integral()`` which provide subset functionality.
-* The ``|=``, ``&=`` and ``^=`` operators are not supported as the **operator**
-  module is missing from MicroPython.
-  
-What's working:
-
-.. code-block:: python
-
-  # Some variations of constructing a BitArray 
-  bitstring.BitArray(hex='0x000001b3')
-  bitstring.BitArray(bin='0011 00')
-  bitstring.BitArray(int=32, length=7)
-  bitstring.BitArray(intbe=-32768, length=16)
-  bitstring.BitArray(float=10.3, length=32)
-  bitstring.BitArray(floatle=-273.15, length=64)
-  bitstring.BitArray(bytes=b'\x00\x01\x02\xff', length=28)
-  bitstring.BitArray(bool=True)
-  
-  # Conversions
-  bitstring.BitArray(int=32, length=7).bin
-  bitstring.BitArray(int=32, length=7).tobytes()
-  bitstring.BitArray(bitstring.Bits(hex='0x000001b3'))
-  
-  # Comparison
-  bitstring.BitArray(hex='0x000001b3') == bitstring.BitArray(hex='0x000001b3')
-  
-  # Unary operation
-  ~bitstring.BitArray(hex='0x000001b3')
-  
-  # Slicing and joining
-  bitstring.BitArray(hex='0x000001b3')[5:10]
-  bitstring.BitArray(hex='0x000001b3') + bitstring.BitArray(int=32, length=7)
-  
-
-What's currently(!) not working because I(!!!) introduced bugs.
-
-.. code-block:: python
-
-  # The auto initialiser 
-  bitstring.BitArray('0b001100')
-  bitstring.BitArray('int:11=540')
-  
-  # Packing
-  bitstring.pack('bool, int:7, floatbe:32', True, -32, -273.15)
-  
-  # Compact form
-  bitstring.pack('>qqqq', 10, 11, 12, 13)
-
-  # Binary operations
-  bitstring.BitArray(int=32, length=7) |  bitstring.BitArray(int=1, length=7)
-  
-  # Finding and replacing (because of the MicroPython regex implementation)
-  bitstring.BitArray(hex='0x000001b3').findall('00')
-
-  # Probably lots of other things.
- 
-There are also some "behind the scenes" changes.
-
-* Copied code from ``Error()`` class into derived classes to work-around
-  ``TypeError: multiple bases have instance lay-out conflict`` problem.
-* MicroPython does not support slices with step not equal 1.
-  ``NotImplementedError: only slices with step=1 (aka None) are supported``.
-* MicroPython does not support named groups in regular expressions so ``tokenparser()`` had
-  to be adjusted.
-* MicroPython ``bytes`` and ``bytearrays`` don't have a ``fromhex()`` class method so the
-  logic had to be re-written.
-* The original unittests won't work anymore. There is a simple ``tests/test-micropython.py`` script
-  that checks some functionality.
-* I also added ``.travis.yml`` for testing on <https://travis-ci.org/>
-
-Documentation
--------------
-The manual for the bitstring module is available here
-<http://packages.python.org/bitstring>. It contains a walk-through of all
-the features and a complete reference section.
-
-It is also available as a PDF as part of the source download.
-
-Installation
-------------
-If you have downloaded and unzipped the package then you need to run the
-``setup.py`` script with the 'install' argument::
-
-     python setup.py install
-
-You may need to run this with root privileges on Unix-like systems.
+    from ubitstring import Bits
+    s = Bits(float=3.1415, length=32) + Bits(uint=15, length=4) + Bits(bool=True)
+    assert len(s) == 32 + 4 + 1
 
 
-If you haven't yet downloaded the package then you can just try::
+The Bits class
+-----------------------
 
-     easy_install bitstring
+The ``Bits`` class is a simplified version of the Bits_ class of the same name
+of the original Bitstring package. The focus is on the *creation* of
+binary strings, for instance in IoT devices.
 
-or ::
+.. _Bits: https://pythonhosted.org/bitstring/constbitarray.html
 
-     pip install bitstring     
+The ``auto`` and ``filename`` keyword arguments have been removed and only the
+functionality shown in the example below is supported::
 
+    a = Bits(int=-31111, length=32)
+    b = Bits(int=-31111, length=32)
 
-Simple Examples
----------------
-Creation::
+    assert a.len == 32
 
-     >>> a = BitArray(bin='00101')
-     >>> b = Bits(a_file_object)
-     >>> c = BitArray('0xff, 0b101, 0o65, uint:6=22')
-     >>> d = pack('intle:16, hex=a, 0b1', 100, a='0x34f')
-     >>> e = pack('<16h', *range(16))
+    assert a.int == -31111
+    assert a.hex == 'ffff8679'
+    assert a.bin == '11111111111111111000011001111001'
+    assert a.bytes == b'\xff\xff\x86y'
 
-Different interpretations, slicing and concatenation::
+    assert a.all(True, [1,2,3,4]) is True
+    assert a.all(True, [30]) is False
 
-     >>> a = BitArray('0x1af')
-     >>> a.hex, a.bin, a.uint
-     ('1af', '000110101111', 431)
-     >>> a[10:3:-1].bin
-     '1110101'
-     >>> 3*a + '0b100'
-     BitArray('0o0657056705674')
+    assert a.any(True, [0,30]) is True
+    assert a.any(True, [29,30]) is False
 
-Reading data sequentially::
+    assert a.count(1) == 24
+    assert a.count(0) == 8
 
-     >>> b = BitStream('0x160120f')
-     >>> b.read(12).hex
-     '160'
-     >>> b.pos = 0
-     >>> b.read('uint:12')
-     352
-     >>> b.readlist('uint:12, bin:3')
-     [288, '111']
+    assert a.tobytes() == b'\xff\xff\x86y'
+    assert a[-4:].bin == '1001'
 
-Searching, inserting and deleting::
+    assert a == b
 
-     >>> c = BitArray('0b00010010010010001111')   # c.hex == '0x1248f'
-     >>> c.find('0x48')
-     (8,)
-     >>> c.replace('0b001', '0xabc')
-     >>> c.insert('0b0000')
-     >>> del c[12:16]
+    c = a + b
+    assert c.hex == 'ffff8679ffff8679'
 
-Unit Tests
-----------
-
-I have no plans to port the unit tests to MicroPython. There is just a little script ``tests/test-micropython.py`` which
-should run and exit with 0 if successful.
 
 ----
 
@@ -181,5 +62,5 @@ Copyright (c) 2016 Scott Griffiths
 For more information see the project's homepage on GitHub:
 <https://github.com/scott-griffiths/bitstring>
 
-The MicroPython version has been patched together by Markus Juenemann: 
+The MicroPython version has been created by Markus Juenemann: 
 <https://github.com/mjuenema/micropython-bitstring>
