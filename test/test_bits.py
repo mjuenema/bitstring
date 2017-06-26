@@ -5,8 +5,8 @@ import sys
 
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
-import bitstring
 import array
+import ubitstring as bitstring
 from ubitstring import Bits, ConstByteStore, ByteStore
 
 class Creation(unittest.TestCase):
@@ -394,6 +394,15 @@ class Misc(unittest.TestCase):
 
         c = a + b
         assert c.hex == 'ffff8679ffff8679'
+
+        assert str(a) == '0xffff8679'
+        assert repr(a) == "Bits('0xffff8679')"
+        assert hash(a) > 0
+
+        f = Bits(float=3.1415, length=32)
+        assert f.len == 32
+
+        assert a != f
 
 
 class ModifiedByAddingBug(unittest.TestCase):
