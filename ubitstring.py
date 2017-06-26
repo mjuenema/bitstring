@@ -56,7 +56,7 @@ __author__ = "Scott Griffiths, Markus Juenemann"
 
 import copy
 import sys
-import re
+##import re
 import binascii
 import os
 import struct
@@ -431,20 +431,20 @@ INIT_NAMES = ('uint', 'int', 'ue', 'se', 'sie', 'uie', 'hex', 'oct', 'bin', 'bit
               'uintbe', 'intbe', 'uintle', 'intle', 'uintne', 'intne',
               'float', 'floatbe', 'floatle', 'floatne', 'bytes', 'bool', 'pad')
 
-TOKEN_RE = re.compile(r'(?P<name>' + '|'.join(INIT_NAMES) +
-                      r')((:(?P<len>[^=]+)))?(=(?P<value>.*))?$', re.IGNORECASE)
-DEFAULT_UINT = re.compile(r'(?P<len>[^=]+)?(=(?P<value>.*))?$', re.IGNORECASE)
-
-MULTIPLICATIVE_RE = re.compile(r'(?P<factor>.*)\*(?P<token>.+)')
-
-# Hex, oct or binary literals
-LITERAL_RE = re.compile(r'(?P<name>0(x|o|b))(?P<value>.+)', re.IGNORECASE)
-
-# An endianness indicator followed by one or more struct.pack codes
-STRUCT_PACK_RE = re.compile(r'(?P<endian><|>|@)?(?P<fmt>(?:\d*[bBhHlLqQfd])+)$')
-
-# A number followed by a single character struct.pack code
-STRUCT_SPLIT_RE = re.compile(r'\d*[bBhHlLqQfd]')
+##TOKEN_RE = re.compile(r'(?P<name>' + '|'.join(INIT_NAMES) +
+##                      r')((:(?P<len>[^=]+)))?(=(?P<value>.*))?$', re.IGNORECASE)
+##DEFAULT_UINT = re.compile(r'(?P<len>[^=]+)?(=(?P<value>.*))?$', re.IGNORECASE)
+##
+##MULTIPLICATIVE_RE = re.compile(r'(?P<factor>.*)\*(?P<token>.+)')
+##
+### Hex, oct or binary literals
+##LITERAL_RE = re.compile(r'(?P<name>0(x|o|b))(?P<value>.+)', re.IGNORECASE)
+##
+### An endianness indicator followed by one or more struct.pack codes
+##STRUCT_PACK_RE = re.compile(r'(?P<endian><|>|@)?(?P<fmt>(?:\d*[bBhHlLqQfd])+)$')
+##
+### A number followed by a single character struct.pack code
+##STRUCT_SPLIT_RE = re.compile(r'\d*[bBhHlLqQfd]')
 
 # These replicate the struct.pack codes
 # Big-endian
@@ -470,8 +470,8 @@ _tokenname_to_initialiser = {'hex': 'hex', '0x': 'hex', '0X': 'hex', 'oct': 'oct
 
 
 
-# Looks for first number*(
-BRACKET_RE = re.compile(r'(?P<factor>\d+)\*\(')
+### Looks for first number*(
+##BRACKET_RE = re.compile(r'(?P<factor>\d+)\*\(')
 
 
 
