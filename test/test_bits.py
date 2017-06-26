@@ -402,6 +402,8 @@ class Misc(unittest.TestCase):
         f = Bits(float=3.1415, length=32)
         assert f.len == 32
 
+        assert a != f
+
 
 class ModifiedByAddingBug(unittest.TestCase):
 

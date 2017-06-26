@@ -597,12 +597,6 @@ class Bits(object):
                 except KeyError:
                     raise CreationError("Unrecognised keyword '{0}' used to initialise.", k)
 
-#    def _initialise_from_auto(self, auto, length, offset):
-#        if offset is None:
-#            offset = 0
-#        self._setauto(auto, length, offset)
-#        return
-
     def __copy__(self):
         """Return a new copy of the Bits for the copy module."""
         # Note that if you want a new copy (different ID), use _copy instead.
@@ -758,169 +752,6 @@ class Bits(object):
 
         """
         return not self.__eq__(bs)
-
-    def __invert__(self):
-        """Return bitstring with every bit inverted.
-
-        Raises Error if the bitstring is empty.
-
-        """
-        if not self.len:
-            raise Error("Cannot invert empty bitstring.")
-        s = self._copy()
-        s._invert_all()
-        return s
-
-    def __lshift__(self, n):
-        """Return bitstring with bits shifted by n to the left.
-
-        n -- the number of bits to shift. Must be >= 0.
-
-        """
-        if n < 0:
-            raise ValueError("Cannot shift by a negative amount.")
-        if not self.len:
-            raise ValueError("Cannot shift an empty bitstring.")
-        n = min(n, self.len)
-        s = self._slice(n, self.len)
-        s._append(Bits(n))
-        return s
-
-    def __rshift__(self, n):
-        """Return bitstring with bits shifted by n to the right.
-
-        n -- the number of bits to shift. Must be >= 0.
-
-        """
-        if n < 0:
-            raise ValueError("Cannot shift by a negative amount.")
-        if not self.len:
-            raise ValueError("Cannot shift an empty bitstring.")
-        if not n:
-            return self._copy()
-        s = self.__class__(length=min(n, self.len))
-        s._append(self[:-n])
-        return s
-
-    def __mul__(self, n):
-        """Return bitstring consisting of n concatenations of self.
-
-        Called for expression of the form 'a = b*3'.
-        n -- The number of concatenations. Must be >= 0.
-
-        """
-        if n < 0:
-            raise ValueError("Cannot multiply by a negative integer.")
-        if not n:
-            return self.__class__()
-        s = self._copy()
-        s._imul(n)
-        return s
-
-    def __rmul__(self, n):
-        """Return bitstring consisting of n concatenations of self.
-
-        Called for expressions of the form 'a = 3*b'.
-        n -- The number of concatenations. Must be >= 0.
-
-        """
-        return self.__mul__(n)
-
-    def __and__(self, bs):
-        """Bit-wise 'and' between two bitstrings. Returns new bitstring.
-
-        bs -- The bitstring to '&' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        bs = Bits(bs)
-        if self.len != bs.len:
-            raise ValueError("Bitstrings must have the same length "
-                             "for & operator.")
-        s = self._copy()
-        s._iand(bs)
-        return s
-
-    def __rand__(self, bs):
-        """Bit-wise 'and' between two bitstrings. Returns new bitstring.
-
-        bs -- the bitstring to '&' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        return self.__and__(bs)
-
-    def __or__(self, bs):
-        """Bit-wise 'or' between two bitstrings. Returns new bitstring.
-
-        bs -- The bitstring to '|' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        bs = Bits(bs)
-        if self.len != bs.len:
-            raise ValueError("Bitstrings must have the same length "
-                             "for | operator.")
-        s = self._copy()
-        s._ior(bs)
-        return s
-
-    def __ror__(self, bs):
-        """Bit-wise 'or' between two bitstrings. Returns new bitstring.
-
-        bs -- The bitstring to '|' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        return self.__or__(bs)
-
-    def __xor__(self, bs):
-        """Bit-wise 'xor' between two bitstrings. Returns new bitstring.
-
-        bs -- The bitstring to '^' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        bs = Bits(bs)
-        if self.len != bs.len:
-            raise ValueError("Bitstrings must have the same length "
-                             "for ^ operator.")
-        s = self._copy()
-        s._ixor(bs)
-        return s
-
-    def __rxor__(self, bs):
-        """Bit-wise 'xor' between two bitstrings. Returns new bitstring.
-
-        bs -- The bitstring to '^' with.
-
-        Raises ValueError if the two bitstrings have differing lengths.
-
-        """
-        return self.__xor__(bs)
-
-##    def __contains__(self, bs):
-##        """Return whether bs is contained in the current bitstring.
-##
-##        bs -- The bitstring to search for.
-##
-##        """
-##        # Don't want to change pos
-##        try:
-##            pos = self._pos
-##        except AttributeError:
-##            pass
-##        found = Bits.find(self, bs, bytealigned=False)
-##        try:
-##            self._pos = pos
-##        except AttributeError:
-##            pass
-##        return bool(found)
 
     def __hash__(self):
         """Return an integer hash of the object."""
@@ -1880,15 +1711,6 @@ class Bits(object):
         for i in xrange(len(a)):
             a[i] = f(a[i + self_byteoffset], b[i + bs_byteoffset])
         return self
-
-#    def _ior(self, bs):
-#        return self._inplace_logical_helper(bs, operator.ior)
-#
-#    def _iand(self, bs):
-#        return self._inplace_logical_helper(bs, operator.iand)
-#
-#    def _ixor(self, bs):
-#        return self._inplace_logical_helper(bs, operator.xor)
 
     def _readbits(self, length, start):
         """Read some bits from the bitstring and return newly constructed bitstring."""
