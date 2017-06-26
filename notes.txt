@@ -1,0 +1,23 @@
+My own notes, because I keep forgetting.
+
+Uploading to PyPi:
+
+    cat ~/.pypirc
+    python3 setup.py clean
+	python3 setup.py sdist
+
+Register once with PyPi Test:
+
+	twine-3 register -r pypitest dist/micropython-bitstring-0.1.0.tar.gz
+
+Upload to PyPi Test:
+
+	twine-3 upload -r pypitest dist/micropython-bitstring-0.1.0.tar.gz
+
+Register once with PyPi:
+
+	twine-3 register dist/micropython-bitstring-0.1.0.tar.gz
+
+Upload to PyPi:
+
+	twine-3 upload dist/micropython-bitstring-0.1.0.tar.gz

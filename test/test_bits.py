@@ -7,7 +7,7 @@ sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bitstring
 import array
-from bitstring import Bits, ConstByteStore, ByteStore
+from ubitstring import Bits, ConstByteStore, ByteStore
 
 class Creation(unittest.TestCase):
     def testCreationFromBytes(self):
