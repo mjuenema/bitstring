@@ -395,6 +395,13 @@ class Misc(unittest.TestCase):
         c = a + b
         assert c.hex == 'ffff8679ffff8679'
 
+        assert str(a) == '0xffff8679'
+        assert repr(a) == "Bits('0xffff8679')"
+        assert hash(a) > 0
+
+        f = Bits(float=3.1415, length=32)
+        assert f.len == 32
+
 
 class ModifiedByAddingBug(unittest.TestCase):
 
