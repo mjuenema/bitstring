@@ -5,8 +5,8 @@ import sys
 
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
-import bitstring
 import array
+import ubitstring as bitstring
 from ubitstring import Bits, ConstByteStore, ByteStore
 
 class Creation(unittest.TestCase):

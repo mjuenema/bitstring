@@ -74,13 +74,13 @@ MAX_CHARS = 250
 CACHE_SIZE = 10
 
 
-def _isinstance_integral(x):
-    # Replacement for _isinstance_integral(x)
-    return isinstance(x, int) or isinstance(x, float)
-
-def _isinstance_iterable(x):
-    # Replacement for _isinstance_iterable(x)
-    return (isinstance(x, list) or isinstance(x, tuple)) and not isinstance(x, str)
+##def _isinstance_integral(x):
+##    # Replacement for _isinstance_integral(x)
+##    return isinstance(x, int) or isinstance(x, float)
+##
+##def _isinstance_iterable(x):
+##    # Replacement for _isinstance_iterable(x)
+##    return (isinstance(x, list) or isinstance(x, tuple)) and not isinstance(x, str)
 
 class Error(Exception):
     """Base class for errors in the bitstring module."""
@@ -475,168 +475,168 @@ _tokenname_to_initialiser = {'hex': 'hex', '0x': 'hex', '0X': 'hex', 'oct': 'oct
                              '0o': 'oct', '0O': 'oct', 'bin': 'bin', '0b': 'bin',
                              '0B': 'bin', 'bits': 'auto', 'bytes': 'bytes', 'pad': 'pad'}
 
-def structparser(token):
-    """Parse struct-like format string token into sub-token list."""
-    m = STRUCT_PACK_RE.match(token)
-    if not m:
-        return [token]
-    else:
-        endian = m.group(1)
-        if endian is None:
-            return [token]
-        # Split the format string into a list of 'q', '4h' etc.
-        formatlist = re.findall(STRUCT_SPLIT_RE, m.group(2))
-        # Now deal with mulitiplicative factors, 4h -> hhhh etc.
-        fmt = ''.join([f[-1] * int(f[:-1]) if len(f) != 1 else
-                       f for f in formatlist])
-        if endian == '@':
-            # Native endianness
-            if byteorder == 'little':
-                endian = '<'
-            else:
-                assert byteorder == 'big'
-                endian = '>'
-        if endian == '<':
-            tokens = [REPLACEMENTS_LE[c] for c in fmt]
-        else:
-            assert endian == '>'
-            tokens = [REPLACEMENTS_BE[c] for c in fmt]
-    return tokens
+##def structparser(token):
+##    """Parse struct-like format string token into sub-token list."""
+##    m = STRUCT_PACK_RE.match(token)
+##    if not m:
+##        return [token]
+##    else:
+##        endian = m.group(1)
+##        if endian is None:
+##            return [token]
+##        # Split the format string into a list of 'q', '4h' etc.
+##        formatlist = re.findall(STRUCT_SPLIT_RE, m.group(2))
+##        # Now deal with mulitiplicative factors, 4h -> hhhh etc.
+##        fmt = ''.join([f[-1] * int(f[:-1]) if len(f) != 1 else
+##                       f for f in formatlist])
+##        if endian == '@':
+##            # Native endianness
+##            if byteorder == 'little':
+##                endian = '<'
+##            else:
+##                assert byteorder == 'big'
+##                endian = '>'
+##        if endian == '<':
+##            tokens = [REPLACEMENTS_LE[c] for c in fmt]
+##        else:
+##            assert endian == '>'
+##            tokens = [REPLACEMENTS_BE[c] for c in fmt]
+##    return tokens
 
-def tokenparser(fmt, keys=None, token_cache={}):
-    """Divide the format string into tokens and parse them.
-
-    Return stretchy token and list of [initialiser, length, value]
-    initialiser is one of: hex, oct, bin, uint, int, se, ue, 0x, 0o, 0b etc.
-    length is None if not known, as is value.
-
-    If the token is in the keyword dictionary (keys) then it counts as a
-    special case and isn't messed with.
-
-    tokens must be of the form: [factor*][initialiser][:][length][=value]
-
-    """
-    try:
-        return token_cache[(fmt, keys)]
-    except KeyError:
-        token_key = (fmt, keys)
-    # Very inefficient expanding of brackets.
-    fmt = expand_brackets(fmt)
-    # Split tokens by ',' and remove whitespace
-    # The meta_tokens can either be ordinary single tokens or multiple
-    # struct-format token strings.
-    meta_tokens = (''.join(f.split()) for f in fmt.split(','))
-    return_values = []
-    stretchy_token = False
-    for meta_token in meta_tokens:
-        # See if it has a multiplicative factor
-        m = MULTIPLICATIVE_RE.match(meta_token)
-        if not m:
-            factor = 1
-        else:
-            factor = int(m.group(1))
-            meta_token = m.group(2)
-        # See if it's a struct-like format
-        tokens = structparser(meta_token)
-        ret_vals = []
-        for token in tokens:
-            if keys and token in keys:
-                # Don't bother parsing it, it's a keyword argument
-                ret_vals.append([token, None, None])
-                continue
-            value = length = None
-            if token == '':
-                continue
-            # Match literal tokens of the form 0x... 0o... and 0b...
-            m = LITERAL_RE.match(token)
-            if m:
-                name = m.group(1)
-                value = m.group(2)
-                ret_vals.append([name, length, value])
-                continue
-            # Match everything else:
-            m1 = TOKEN_RE.match(token)
-            if not m1:
-                # and if you don't specify a 'name' then the default is 'uint':
-                m2 = DEFAULT_UINT.match(token)
-                if not m2:
-                    raise ValueError("Don't understand token '{0}'.".format(token))
-            if m1:
-                name = m1.group(1)
-                length = m1.group(2)
-                if m1.group(3):
-                    value = m1.group(3)
-            else:
-                assert m2
-                name = 'uint'
-                length = m2.group(1)
-                if m2.group(2):
-                    value = m2.group(2)
-            if name == 'bool':
-                if length is not None:
-                    raise ValueError("You can't specify a length with bool tokens - they are always one bit.")
-                length = 1
-            if length is None and name not in ('se', 'ue', 'sie', 'uie'):
-                stretchy_token = True
-            if length is not None:
-                # Try converting length to int, otherwise check it's a key.
-                try:
-                    length = int(length)
-                    if length < 0:
-                        raise Error
-                    # For the 'bytes' token convert length to bits.
-                    if name == 'bytes':
-                        length *= 8
-                except Error:
-                    raise ValueError("Can't read a token with a negative length.")
-                except ValueError:
-                    if not keys or length not in keys:
-                        raise ValueError("Don't understand length '{0}' of token.".format(length))
-            ret_vals.append([name, length, value])
-        # This multiplies by the multiplicative factor, but this means that
-        # we can't allow keyword values as multipliers (e.g. n*uint:8).
-        # The only way to do this would be to return the factor in some fashion
-        # (we can't use the key's value here as it would mean that we couldn't
-        # sensibly continue to cache the function's results. (TODO).
-        return_values.extend(ret_vals * factor)
-    return_values = [tuple(x) for x in return_values]
-    if len(token_cache) < CACHE_SIZE:
-        token_cache[token_key] = stretchy_token, return_values
-    return stretchy_token, return_values
+##def tokenparser(fmt, keys=None, token_cache={}):
+##    """Divide the format string into tokens and parse them.
+##
+##    Return stretchy token and list of [initialiser, length, value]
+##    initialiser is one of: hex, oct, bin, uint, int, se, ue, 0x, 0o, 0b etc.
+##    length is None if not known, as is value.
+##
+##    If the token is in the keyword dictionary (keys) then it counts as a
+##    special case and isn't messed with.
+##
+##    tokens must be of the form: [factor*][initialiser][:][length][=value]
+##
+##    """
+##    try:
+##        return token_cache[(fmt, keys)]
+##    except KeyError:
+##        token_key = (fmt, keys)
+##    # Very inefficient expanding of brackets.
+##    fmt = expand_brackets(fmt)
+##    # Split tokens by ',' and remove whitespace
+##    # The meta_tokens can either be ordinary single tokens or multiple
+##    # struct-format token strings.
+##    meta_tokens = (''.join(f.split()) for f in fmt.split(','))
+##    return_values = []
+##    stretchy_token = False
+##    for meta_token in meta_tokens:
+##        # See if it has a multiplicative factor
+##        m = MULTIPLICATIVE_RE.match(meta_token)
+##        if not m:
+##            factor = 1
+##        else:
+##            factor = int(m.group(1))
+##            meta_token = m.group(2)
+##        # See if it's a struct-like format
+##        tokens = structparser(meta_token)
+##        ret_vals = []
+##        for token in tokens:
+##            if keys and token in keys:
+##                # Don't bother parsing it, it's a keyword argument
+##                ret_vals.append([token, None, None])
+##                continue
+##            value = length = None
+##            if token == '':
+##                continue
+##            # Match literal tokens of the form 0x... 0o... and 0b...
+##            m = LITERAL_RE.match(token)
+##            if m:
+##                name = m.group(1)
+##                value = m.group(2)
+##                ret_vals.append([name, length, value])
+##                continue
+##            # Match everything else:
+##            m1 = TOKEN_RE.match(token)
+##            if not m1:
+##                # and if you don't specify a 'name' then the default is 'uint':
+##                m2 = DEFAULT_UINT.match(token)
+##                if not m2:
+##                    raise ValueError("Don't understand token '{0}'.".format(token))
+##            if m1:
+##                name = m1.group(1)
+##                length = m1.group(2)
+##                if m1.group(3):
+##                    value = m1.group(3)
+##            else:
+##                assert m2
+##                name = 'uint'
+##                length = m2.group(1)
+##                if m2.group(2):
+##                    value = m2.group(2)
+##            if name == 'bool':
+##                if length is not None:
+##                    raise ValueError("You can't specify a length with bool tokens - they are always one bit.")
+##                length = 1
+##            if length is None and name not in ('se', 'ue', 'sie', 'uie'):
+##                stretchy_token = True
+##            if length is not None:
+##                # Try converting length to int, otherwise check it's a key.
+##                try:
+##                    length = int(length)
+##                    if length < 0:
+##                        raise Error
+##                    # For the 'bytes' token convert length to bits.
+##                    if name == 'bytes':
+##                        length *= 8
+##                except Error:
+##                    raise ValueError("Can't read a token with a negative length.")
+##                except ValueError:
+##                    if not keys or length not in keys:
+##                        raise ValueError("Don't understand length '{0}' of token.".format(length))
+##            ret_vals.append([name, length, value])
+##        # This multiplies by the multiplicative factor, but this means that
+##        # we can't allow keyword values as multipliers (e.g. n*uint:8).
+##        # The only way to do this would be to return the factor in some fashion
+##        # (we can't use the key's value here as it would mean that we couldn't
+##        # sensibly continue to cache the function's results. (TODO).
+##        return_values.extend(ret_vals * factor)
+##    return_values = [tuple(x) for x in return_values]
+##    if len(token_cache) < CACHE_SIZE:
+##        token_cache[token_key] = stretchy_token, return_values
+##    return stretchy_token, return_values
 
 # Looks for first number*(
 BRACKET_RE = re.compile(r'(?P<factor>\d+)\*\(')
 
-def expand_brackets(s):
-    """Remove whitespace and expand all brackets."""
-    s = ''.join(s.split())
-    while True:
-        start = s.find('(')
-        if start == -1:
-            break
-        count = 1 # Number of hanging open brackets
-        p = start + 1
-        while p < len(s):
-            if s[p] == '(':
-                count += 1
-            if s[p] == ')':
-                count -= 1
-            if not count:
-                break
-            p += 1
-        if count:
-            raise ValueError("Unbalanced parenthesis in '{0}'.".format(s))
-        if start == 0 or s[start - 1] != '*':
-            s = s[0:start] + s[start + 1:p] + s[p + 1:]
-        else:
-            m = BRACKET_RE.search(s)
-            if m:
-                factor = int(m.group(1))
-                matchstart = m.start(1)
-                s = s[0:matchstart] + (factor - 1) * (s[start + 1:p] + ',') + s[start + 1:p] + s[p + 1:]
-            else:
-                raise ValueError("Failed to parse '{0}'.".format(s))
-    return s
+##def expand_brackets(s):
+##    """Remove whitespace and expand all brackets."""
+##    s = ''.join(s.split())
+##    while True:
+##        start = s.find('(')
+##        if start == -1:
+##            break
+##        count = 1 # Number of hanging open brackets
+##        p = start + 1
+##        while p < len(s):
+##            if s[p] == '(':
+##                count += 1
+##            if s[p] == ')':
+##                count -= 1
+##            if not count:
+##                break
+##            p += 1
+##        if count:
+##            raise ValueError("Unbalanced parenthesis in '{0}'.".format(s))
+##        if start == 0 or s[start - 1] != '*':
+##            s = s[0:start] + s[start + 1:p] + s[p + 1:]
+##        else:
+##            m = BRACKET_RE.search(s)
+##            if m:
+##                factor = int(m.group(1))
+##                matchstart = m.start(1)
+##                s = s[0:matchstart] + (factor - 1) * (s[start + 1:p] + ',') + s[start + 1:p] + s[p + 1:]
+##            else:
+##                raise ValueError("Failed to parse '{0}'.".format(s))
+##    return s
 
 
 # This converts a single octal digit to 3 bits.
@@ -734,33 +734,33 @@ class Bits(object):
         
         self._initialise(length, offset, **kwargs)
 
-#    def __new__(cls, length=None, offset=None, _cache={}, **kwargs):
-        ## For instances auto-initialised with a string we intern the
-        ## instance for re-use.
-        #try:
-        #    if isinstance(auto, basestring):
-        #        try:
-        #            return _cache[auto]
-        #        except KeyError:
-        #            x = object.__new__(Bits)
-        #            try:
-        #                _, tokens = tokenparser(auto)
-        #            except ValueError as e:
-        #                raise CreationError(*e.args)
-        #            x._datastore = ConstByteStore(bytearray(0), 0, 0)
-        #            for token in tokens:
-        #                x._datastore._appendstore(Bits._init_with_token(*token)._datastore)
-        #            assert x._assertsanity()
-        #            if len(_cache) < CACHE_SIZE:
-        #                _cache[auto] = x
-        #            return x
-        #    if type(auto) == Bits:
-        #        return auto
-        #except TypeError:
-        #    pass
-#        x = super(Bits, cls).__new__(cls)
-#        x._initialise(length, offset, **kwargs)
-#        return x
+###    def __new__(cls, length=None, offset=None, _cache={}, **kwargs):
+##        ## For instances auto-initialised with a string we intern the
+##        ## instance for re-use.
+##        #try:
+##        #    if isinstance(auto, basestring):
+##        #        try:
+##        #            return _cache[auto]
+##        #        except KeyError:
+##        #            x = object.__new__(Bits)
+##        #            try:
+##        #                _, tokens = tokenparser(auto)
+##        #            except ValueError as e:
+##        #                raise CreationError(*e.args)
+##        #            x._datastore = ConstByteStore(bytearray(0), 0, 0)
+##        #            for token in tokens:
+##        #                x._datastore._appendstore(Bits._init_with_token(*token)._datastore)
+##        #            assert x._assertsanity()
+##        #            if len(_cache) < CACHE_SIZE:
+##        #                _cache[auto] = x
+##        #            return x
+##        #    if type(auto) == Bits:
+##        #        return auto
+##        #except TypeError:
+##        #    pass
+###        x = super(Bits, cls).__new__(cls)
+###        x._initialise(length, offset, **kwargs)
+###        return x
 
     def _initialise(self, length, offset, **kwargs):
         if length is not None and length < 0:
@@ -1156,102 +1156,102 @@ class Bits(object):
         assert (self.len + self._offset + 7) // 8 == self._datastore.bytelength + self._datastore.byteoffset
         return True
 
-    @classmethod
-    def _init_with_token(cls, name, token_length, value):
-        if token_length is not None:
-            token_length = int(token_length)
-        if token_length == 0:
-            return cls()
-        # For pad token just return the length in zero bits
-        if name == 'pad':
-            return cls(token_length)
-
-        if value is None:
-            if token_length is None:
-                error = "Token has no value ({0}=???).".format(name)
-            else:
-                error = "Token has no value ({0}:{1}=???).".format(name, token_length)
-            raise ValueError(error)
-        try:
-            b = cls(**{_tokenname_to_initialiser[name]: value})
-        except KeyError:
-            if name in ('se', 'ue', 'sie', 'uie'):
-                b = cls(**{name: int(value)})
-            elif name in ('uint', 'int', 'uintbe', 'intbe', 'uintle', 'intle', 'uintne', 'intne'):
-                b = cls(**{name: int(value), 'length': token_length})
-            elif name in ('float', 'floatbe', 'floatle', 'floatne'):
-                b = cls(**{name: float(value), 'length': token_length})
-            elif name == 'bool':
-                if value in (1, 'True', '1'):
-                    b = cls(bool=True)
-                elif value in (0, 'False', '0'):
-                    b = cls(bool=False)
-                else:
-                    raise CreationError("bool token can only be 'True' or 'False'.")
-            else:
-                raise CreationError("Can't parse token name {0}.", name)
-        if token_length is not None and b.len != token_length:
-            msg = "Token with length {0} packed with value of length {1} ({2}:{3}={4})."
-            raise CreationError(msg, token_length, b.len, name, token_length, value)
-        return b
+##    @classmethod
+##    def _init_with_token(cls, name, token_length, value):
+##        if token_length is not None:
+##            token_length = int(token_length)
+##        if token_length == 0:
+##            return cls()
+##        # For pad token just return the length in zero bits
+##        if name == 'pad':
+##            return cls(token_length)
+##
+##        if value is None:
+##            if token_length is None:
+##                error = "Token has no value ({0}=???).".format(name)
+##            else:
+##                error = "Token has no value ({0}:{1}=???).".format(name, token_length)
+##            raise ValueError(error)
+##        try:
+##            b = cls(**{_tokenname_to_initialiser[name]: value})
+##        except KeyError:
+##            if name in ('se', 'ue', 'sie', 'uie'):
+##                b = cls(**{name: int(value)})
+##            elif name in ('uint', 'int', 'uintbe', 'intbe', 'uintle', 'intle', 'uintne', 'intne'):
+##                b = cls(**{name: int(value), 'length': token_length})
+##            elif name in ('float', 'floatbe', 'floatle', 'floatne'):
+##                b = cls(**{name: float(value), 'length': token_length})
+##            elif name == 'bool':
+##                if value in (1, 'True', '1'):
+##                    b = cls(bool=True)
+##                elif value in (0, 'False', '0'):
+##                    b = cls(bool=False)
+##                else:
+##                    raise CreationError("bool token can only be 'True' or 'False'.")
+##            else:
+##                raise CreationError("Can't parse token name {0}.", name)
+##        if token_length is not None and b.len != token_length:
+##            msg = "Token with length {0} packed with value of length {1} ({2}:{3}={4})."
+##            raise CreationError(msg, token_length, b.len, name, token_length, value)
+##        return b
 
     def _clear(self):
         """Reset the bitstring to an empty state."""
         self._datastore = ByteStore(bytearray(0))
 
-    def _setauto(self, s, length, offset):
-        """Set bitstring from a bitstring, file, bool, integer, array, iterable or string."""
-        # As s can be so many different things it's important to do the checks
-        # in the correct order, as some types are also other allowed types.
-        # So basestring must be checked before Iterable
-        # and bytes/bytearray before Iterable but after basestring!
-        if isinstance(s, Bits):
-            if length is None:
-                length = s.len - offset
-            self._setbytes_unsafe(s._datastore.rawbytes, length, s._offset + offset)
-            return
-        #if isinstance(s, file):
-#            if offset is None:
-#                offset = 0
-#            if length is None:
-#                length = os.path.getsize(s.name) * 8 - offset
-#            byteoffset, offset = divmod(offset, 8)
-#            bytelength = (length + byteoffset * 8 + offset + 7) // 8 - byteoffset
-#            m = MmapByteArray(s, bytelength, byteoffset)
-#            if length + byteoffset * 8 + offset > m.filelength * 8:
-#                raise CreationError("File is not long enough for specified "
-#                                    "length and offset.")
-#            self._datastore = ConstByteStore(m, length, offset)
-#            return
-        if length is not None:
-            raise CreationError("The length keyword isn't applicable to this initialiser.")
-        if offset:
-            raise CreationError("The offset keyword isn't applicable to this initialiser.")
-        if isinstance(s, basestring):
-            bs = self._converttobitstring(s)
-            assert bs._offset == 0
-            self._setbytes_unsafe(bs._datastore.rawbytes, bs.length, 0)
-            return
-        if isinstance(s, (bytes, bytearray)):
-            self._setbytes_unsafe(bytearray(s), len(s) * 8, 0)
-            return
-        if isinstance(s, array.array):
-            b = s.tostring()
-            self._setbytes_unsafe(bytearray(b), len(b) * 8, 0)
-            return
-        if _isinstance_integral(s):
-            # Initialise with s zero bits.
-            if s < 0:
-                msg = "Can't create bitstring of negative length {0}."
-                raise CreationError(msg, s)
-            data = bytearray((s + 7) // 8)
-            self._datastore = ByteStore(data, s, 0)
-            return
-        if _isinstance_iterable(s):
-            # Evaluate each item as True or False and set bits to 1 or 0.
-            self._setbin_unsafe(''.join(str(int(bool(x))) for x in s))
-            return
-        raise TypeError("Cannot initialise bitstring from {0}.".format(type(s)))
+##    def _setauto(self, s, length, offset):
+##        """Set bitstring from a bitstring, file, bool, integer, array, iterable or string."""
+##        # As s can be so many different things it's important to do the checks
+##        # in the correct order, as some types are also other allowed types.
+##        # So basestring must be checked before Iterable
+##        # and bytes/bytearray before Iterable but after basestring!
+##        if isinstance(s, Bits):
+##            if length is None:
+##                length = s.len - offset
+##            self._setbytes_unsafe(s._datastore.rawbytes, length, s._offset + offset)
+##            return
+##        #if isinstance(s, file):
+###            if offset is None:
+###                offset = 0
+###            if length is None:
+###                length = os.path.getsize(s.name) * 8 - offset
+###            byteoffset, offset = divmod(offset, 8)
+###            bytelength = (length + byteoffset * 8 + offset + 7) // 8 - byteoffset
+###            m = MmapByteArray(s, bytelength, byteoffset)
+###            if length + byteoffset * 8 + offset > m.filelength * 8:
+###                raise CreationError("File is not long enough for specified "
+###                                    "length and offset.")
+###            self._datastore = ConstByteStore(m, length, offset)
+###            return
+##        if length is not None:
+##            raise CreationError("The length keyword isn't applicable to this initialiser.")
+##        if offset:
+##            raise CreationError("The offset keyword isn't applicable to this initialiser.")
+##        if isinstance(s, basestring):
+##            bs = self._converttobitstring(s)
+##            assert bs._offset == 0
+##            self._setbytes_unsafe(bs._datastore.rawbytes, bs.length, 0)
+##            return
+##        if isinstance(s, (bytes, bytearray)):
+##            self._setbytes_unsafe(bytearray(s), len(s) * 8, 0)
+##            return
+##        if isinstance(s, array.array):
+##            b = s.tostring()
+##            self._setbytes_unsafe(bytearray(b), len(b) * 8, 0)
+##            return
+##        if _isinstance_integral(s):
+##            # Initialise with s zero bits.
+##            if s < 0:
+##                msg = "Can't create bitstring of negative length {0}."
+##                raise CreationError(msg, s)
+##            data = bytearray((s + 7) // 8)
+##            self._datastore = ByteStore(data, s, 0)
+##            return
+##        if _isinstance_iterable(s):
+##            # Evaluate each item as True or False and set bits to 1 or 0.
+##            self._setbin_unsafe(''.join(str(int(bool(x))) for x in s))
+##            return
+##        raise TypeError("Cannot initialise bitstring from {0}.".format(type(s)))
 
     def _setfile(self, filename, length, offset):
         """Use file as source of bits."""
@@ -1962,21 +1962,21 @@ class Bits(object):
         bs._setbytes_unsafe(self._datastore.getbyteslice(startbyte, endbyte + 1), end - start, newoffset)
         return bs
 
-    def _readtoken(self, name, pos, length):
-        """Reads a token from the bitstring and returns the result."""
-        if length is not None and int(length) > self.length - pos:
-            raise ReadError("Reading off the end of the data. "
-                            "Tried to read {0} bits when only {1} available.".format(int(length), self.length - pos))
-        try:
-            val = name_to_read[name](self, length, pos)
-            return val, pos + length
-        except KeyError:
-            if name == 'pad':
-                return None, pos + length
-            raise ValueError("Can't parse token {0}:{1}".format(name, length))
-        except TypeError:
-            # This is for the 'ue', 'se' and 'bool' tokens. They will also return the new pos.
-            return name_to_read[name](self, pos)
+##    def _readtoken(self, name, pos, length):
+##        """Reads a token from the bitstring and returns the result."""
+##        if length is not None and int(length) > self.length - pos:
+##            raise ReadError("Reading off the end of the data. "
+##                            "Tried to read {0} bits when only {1} available.".format(int(length), self.length - pos))
+##        try:
+##            val = name_to_read[name](self, length, pos)
+##            return val, pos + length
+##        except KeyError:
+##            if name == 'pad':
+##                return None, pos + length
+##            raise ValueError("Can't parse token {0}:{1}".format(name, length))
+##        except TypeError:
+##            # This is for the 'ue', 'se' and 'bool' tokens. They will also return the new pos.
+##            return name_to_read[name](self, pos)
 
     def _append(self, bs):
         """Append a bitstring to the current bitstring."""
@@ -2214,99 +2214,99 @@ class Bits(object):
             raise ValueError("end must not be less than start.")
         return start, end
 
-    def unpack(self, fmt, **kwargs):
-        """Interpret the whole bitstring using fmt and return list.
+##    def unpack(self, fmt, **kwargs):
+##        """Interpret the whole bitstring using fmt and return list.
+##
+##        fmt -- A single string or a list of strings with comma separated tokens
+##               describing how to interpret the bits in the bitstring. Items
+##               can also be integers, for reading new bitstring of the given length.
+##        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
+##                  format string will be replaced with their given value.
+##
+##        Raises ValueError if the format is not understood. If not enough bits
+##        are available then all bits to the end of the bitstring will be used.
+##
+##        See the docstring for 'read' for token examples.
+##
+##        """
+##        return self._readlist(fmt, 0, **kwargs)[0]
 
-        fmt -- A single string or a list of strings with comma separated tokens
-               describing how to interpret the bits in the bitstring. Items
-               can also be integers, for reading new bitstring of the given length.
-        kwargs -- A dictionary or keyword-value pairs - the keywords used in the
-                  format string will be replaced with their given value.
-
-        Raises ValueError if the format is not understood. If not enough bits
-        are available then all bits to the end of the bitstring will be used.
-
-        See the docstring for 'read' for token examples.
-
-        """
-        return self._readlist(fmt, 0, **kwargs)[0]
-
-    def _readlist(self, fmt, pos, **kwargs):
-        tokens = []
-        stretchy_token = None
-        if isinstance(fmt, basestring):
-            fmt = [fmt]
-        # Not very optimal this, but replace integers with 'bits' tokens
-        # TODO: optimise
-        for i, f in enumerate(fmt):
-            if _isinstance_integral(f):
-                fmt[i] = "bits:{0}".format(f)
-        for f_item in fmt:
-            stretchy, tkns = tokenparser(f_item, tuple(sorted(kwargs.keys())))
-            if stretchy:
-                if stretchy_token:
-                    raise Error("It's not possible to have more than one 'filler' token.")
-                stretchy_token = stretchy
-            tokens.extend(tkns)
-        if not stretchy_token:
-            lst = []
-            for name, length, _ in tokens:
-                if length in kwargs:
-                    length = kwargs[length]
-                    if name == 'bytes':
-                        length *= 8
-                if name in kwargs and length is None:
-                    # Using default 'uint' - the name is really the length.
-                    value, pos = self._readtoken('uint', pos, kwargs[name])
-                    lst.append(value)
-                    continue
-                value, pos = self._readtoken(name, pos, length)
-                if value is not None: # Don't append pad tokens
-                    lst.append(value)
-            return lst, pos
-        stretchy_token = False
-        bits_after_stretchy_token = 0
-        for token in tokens:
-            name, length, _ = token
-            if length in kwargs:
-                length = kwargs[length]
-                if name == 'bytes':
-                    length *= 8
-            if name in kwargs and length is None:
-                # Default 'uint'.
-                length = kwargs[name]
-            if stretchy_token:
-                if name in ('se', 'ue', 'sie', 'uie'):
-                    raise Error("It's not possible to parse a variable"
-                                "length token after a 'filler' token.")
-                else:
-                    if length is None:
-                        raise Error("It's not possible to have more than "
-                                    "one 'filler' token.")
-                    bits_after_stretchy_token += length
-            if length is None and name not in ('se', 'ue', 'sie', 'uie'):
-                assert not stretchy_token
-                stretchy_token = token
-        bits_left = self.len - pos
-        return_values = []
-        for token in tokens:
-            name, length, _ = token
-            if token is stretchy_token:
-                # Set length to the remaining bits
-                length = max(bits_left - bits_after_stretchy_token, 0)
-            if length in kwargs:
-                length = kwargs[length]
-                if name == 'bytes':
-                    length *= 8
-            if name in kwargs and length is None:
-                # Default 'uint'
-                length = kwargs[name]
-            if length is not None:
-                bits_left -= length
-            value, pos = self._readtoken(name, pos, length)
-            if value is not None:
-                return_values.append(value)
-        return return_values, pos
+##    def _readlist(self, fmt, pos, **kwargs):
+##        tokens = []
+##        stretchy_token = None
+##        if isinstance(fmt, basestring):
+##            fmt = [fmt]
+##        # Not very optimal this, but replace integers with 'bits' tokens
+##        # TODO: optimise
+##        for i, f in enumerate(fmt):
+##            if _isinstance_integral(f):
+##                fmt[i] = "bits:{0}".format(f)
+##        for f_item in fmt:
+##            stretchy, tkns = tokenparser(f_item, tuple(sorted(kwargs.keys())))
+##            if stretchy:
+##                if stretchy_token:
+##                    raise Error("It's not possible to have more than one 'filler' token.")
+##                stretchy_token = stretchy
+##            tokens.extend(tkns)
+##        if not stretchy_token:
+##            lst = []
+##            for name, length, _ in tokens:
+##                if length in kwargs:
+##                    length = kwargs[length]
+##                    if name == 'bytes':
+##                        length *= 8
+##                if name in kwargs and length is None:
+##                    # Using default 'uint' - the name is really the length.
+##                    value, pos = self._readtoken('uint', pos, kwargs[name])
+##                    lst.append(value)
+##                    continue
+##                value, pos = self._readtoken(name, pos, length)
+##                if value is not None: # Don't append pad tokens
+##                    lst.append(value)
+##            return lst, pos
+##        stretchy_token = False
+##        bits_after_stretchy_token = 0
+##        for token in tokens:
+##            name, length, _ = token
+##            if length in kwargs:
+##                length = kwargs[length]
+##                if name == 'bytes':
+##                    length *= 8
+##            if name in kwargs and length is None:
+##                # Default 'uint'.
+##                length = kwargs[name]
+##            if stretchy_token:
+##                if name in ('se', 'ue', 'sie', 'uie'):
+##                    raise Error("It's not possible to parse a variable"
+##                                "length token after a 'filler' token.")
+##                else:
+##                    if length is None:
+##                        raise Error("It's not possible to have more than "
+##                                    "one 'filler' token.")
+##                    bits_after_stretchy_token += length
+##            if length is None and name not in ('se', 'ue', 'sie', 'uie'):
+##                assert not stretchy_token
+##                stretchy_token = token
+##        bits_left = self.len - pos
+##        return_values = []
+##        for token in tokens:
+##            name, length, _ = token
+##            if token is stretchy_token:
+##                # Set length to the remaining bits
+##                length = max(bits_left - bits_after_stretchy_token, 0)
+##            if length in kwargs:
+##                length = kwargs[length]
+##                if name == 'bytes':
+##                    length *= 8
+##            if name in kwargs and length is None:
+##                # Default 'uint'
+##                length = kwargs[name]
+##            if length is not None:
+##                bits_left -= length
+##            value, pos = self._readtoken(name, pos, length)
+##            if value is not None:
+##                return_values.append(value)
+##        return return_values, pos
 
     def _findbytes(self, bytes_, start, end, bytealigned):
         """Quicker version of find when everything's whole byte
@@ -2611,69 +2611,69 @@ class Bits(object):
             d[-1] &= (0xff << unusedbits)
         return bytes(d)
 
-    def tofile(self, f):
-        """Write the bitstring to a file object, padding with zero bits if needed.
-
-        Up to seven zero bits will be added at the end to byte align.
-
-        """
-        # If the bitstring is file based then we don't want to read it all
-        # in to memory.
-        chunksize = 1024 * 1024 # 1 MB chunks
-        if not self._offset:
-            a = 0
-            bytelen = self._datastore.bytelength
-            p = self._datastore.getbyteslice(a, min(a + chunksize, bytelen - 1))
-            while len(p) == chunksize:
-                f.write(p)
-                a += chunksize
-                p = self._datastore.getbyteslice(a, min(a + chunksize, bytelen - 1))
-            f.write(p)
-            # Now the final byte, ensuring that unused bits at end are set to 0.
-            bits_in_final_byte = self.len % 8
-            if not bits_in_final_byte:
-                bits_in_final_byte = 8
-            f.write(self[-bits_in_final_byte:].tobytes())
-        else:
-            # Really quite inefficient...
-            a = 0
-            b = a + chunksize * 8
-            while b <= self.len:
-                f.write(self._slice(a, b)._getbytes())
-                a += chunksize * 8
-                b += chunksize * 8
-            if a != self.len:
-                f.write(self._slice(a, self.len).tobytes())
-
-    def startswith(self, prefix, start=None, end=None):
-        """Return whether the current bitstring starts with prefix.
-
-        prefix -- The bitstring to search for.
-        start -- The bit position to start from. Defaults to 0.
-        end -- The bit position to end at. Defaults to self.len.
-
-        """
-        prefix = Bits(prefix)
-        start, end = self._validate_slice(start, end)
-        if end < start + prefix.len:
-            return False
-        end = start + prefix.len
-        return self._slice(start, end) == prefix
-
-    def endswith(self, suffix, start=None, end=None):
-        """Return whether the current bitstring ends with suffix.
-
-        suffix -- The bitstring to search for.
-        start -- The bit position to start from. Defaults to 0.
-        end -- The bit position to end at. Defaults to self.len.
-
-        """
-        suffix = Bits(suffix)
-        start, end = self._validate_slice(start, end)
-        if start + suffix.len > end:
-            return False
-        start = end - suffix.len
-        return self._slice(start, end) == suffix
+##    def tofile(self, f):
+##        """Write the bitstring to a file object, padding with zero bits if needed.
+##
+##        Up to seven zero bits will be added at the end to byte align.
+##
+##        """
+##        # If the bitstring is file based then we don't want to read it all
+##        # in to memory.
+##        chunksize = 1024 * 1024 # 1 MB chunks
+##        if not self._offset:
+##            a = 0
+##            bytelen = self._datastore.bytelength
+##            p = self._datastore.getbyteslice(a, min(a + chunksize, bytelen - 1))
+##            while len(p) == chunksize:
+##                f.write(p)
+##                a += chunksize
+##                p = self._datastore.getbyteslice(a, min(a + chunksize, bytelen - 1))
+##            f.write(p)
+##            # Now the final byte, ensuring that unused bits at end are set to 0.
+##            bits_in_final_byte = self.len % 8
+##            if not bits_in_final_byte:
+##                bits_in_final_byte = 8
+##            f.write(self[-bits_in_final_byte:].tobytes())
+##        else:
+##            # Really quite inefficient...
+##            a = 0
+##            b = a + chunksize * 8
+##            while b <= self.len:
+##                f.write(self._slice(a, b)._getbytes())
+##                a += chunksize * 8
+##                b += chunksize * 8
+##            if a != self.len:
+##                f.write(self._slice(a, self.len).tobytes())
+##
+##    def startswith(self, prefix, start=None, end=None):
+##        """Return whether the current bitstring starts with prefix.
+##
+##        prefix -- The bitstring to search for.
+##        start -- The bit position to start from. Defaults to 0.
+##        end -- The bit position to end at. Defaults to self.len.
+##
+##        """
+##        prefix = Bits(prefix)
+##        start, end = self._validate_slice(start, end)
+##        if end < start + prefix.len:
+##            return False
+##        end = start + prefix.len
+##        return self._slice(start, end) == prefix
+##
+##    def endswith(self, suffix, start=None, end=None):
+##        """Return whether the current bitstring ends with suffix.
+##
+##        suffix -- The bitstring to search for.
+##        start -- The bit position to start from. Defaults to 0.
+##        end -- The bit position to end at. Defaults to self.len.
+##
+##        """
+##        suffix = Bits(suffix)
+##        start, end = self._validate_slice(start, end)
+##        if start + suffix.len > end:
+##            return False
+##        start = end - suffix.len
+##        return self._slice(start, end) == suffix
 
     def all(self, value, pos=None):
         """Return True if one or many bits are all set to value.
