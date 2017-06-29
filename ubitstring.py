@@ -57,7 +57,7 @@ __author__ = "Scott Griffiths, Markus Juenemann"
 import copy
 import sys
 import ubinascii
-import struct
+import ustruct
 
 byteorder = sys.byteorder
 
@@ -963,7 +963,7 @@ class Bits(object):
             chunksize = 4 # for 'L' format
             while endbyte - chunksize + 1 >= startbyte:
                 val <<= 8 * chunksize
-                val += struct.unpack('<L', bytes(self._datastore.getbyteslice(endbyte + 1 - chunksize, endbyte + 1)))[0]
+                val += ustruct.unpack('<L', bytes(self._datastore.getbyteslice(endbyte + 1 - chunksize, endbyte + 1)))[0]
                 endbyte -= chunksize
             for b in xrange(endbyte, startbyte - 1, -1):
                 val <<= 8
@@ -1008,9 +1008,9 @@ class Bits(object):
             raise CreationError("A non-zero length must be specified with a "
                                 "float initialiser.")
         if length == 32:
-            b = struct.pack('>f', f)
+            b = ustruct.pack('>f', f)
         elif length == 64:
-            b = struct.pack('>d', f)
+            b = ustruct.pack('>d', f)
         else:
             raise CreationError("floats can only be 32 or 64 bits long, "
                                 "not {0} bits", length)
@@ -1021,14 +1021,14 @@ class Bits(object):
         if not (start + self._offset) % 8:
             startbyte = (start + self._offset) // 8
             if length == 32:
-                f, = struct.unpack('>f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
+                f, = ustruct.unpack('>f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
             elif length == 64:
-                f, = struct.unpack('>d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
+                f, = ustruct.unpack('>d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
         else:
             if length == 32:
-                f, = struct.unpack('>f', self._readbytes(32, start))
+                f, = ustruct.unpack('>f', self._readbytes(32, start))
             elif length == 64:
-                f, = struct.unpack('>d', self._readbytes(64, start))
+                f, = ustruct.unpack('>d', self._readbytes(64, start))
         try:
             return f
         except NameError:
@@ -1046,9 +1046,9 @@ class Bits(object):
             raise CreationError("A non-zero length must be specified with a "
                                 "float initialiser.")
         if length == 32:
-            b = struct.pack('<f', f)
+            b = ustruct.pack('<f', f)
         elif length == 64:
-            b = struct.pack('<d', f)
+            b = ustruct.pack('<d', f)
         else:
             raise CreationError("floats can only be 32 or 64 bits long, "
                                 "not {0} bits", length)
@@ -1059,14 +1059,14 @@ class Bits(object):
         startbyte, offset = divmod(start + self._offset, 8)
         if not offset:
             if length == 32:
-                f, = struct.unpack('<f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
+                f, = ustruct.unpack('<f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
             elif length == 64:
-                f, = struct.unpack('<d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
+                f, = ustruct.unpack('<d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
         else:
             if length == 32:
-                f, = struct.unpack('<f', self._readbytes(32, start))
+                f, = ustruct.unpack('<f', self._readbytes(32, start))
             elif length == 64:
-                f, = struct.unpack('<d', self._readbytes(64, start))
+                f, = ustruct.unpack('<d', self._readbytes(64, start))
         try:
             return f
         except NameError:
