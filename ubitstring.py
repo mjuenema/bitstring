@@ -50,14 +50,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __author__ = "Scott Griffiths, Markus Juenemann"
 
-import copy
 import sys
-import binascii
-import struct
+import ubinascii
+import ustruct
 
 byteorder = sys.byteorder
 
@@ -260,7 +259,8 @@ def offsetcopy(s, newoffset):
     """
     assert 0 <= newoffset < 8
     if not s.bitlength:
-        return copy.copy(s)
+        raise NotImplementedError
+        #return copy.copy(s)
     else:
         if newoffset == s.offset % 8:
             return ByteStore(s.getbyteslice(s.byteoffset, s.byteoffset + s.bytelength), s.bitlength, newoffset)
@@ -834,10 +834,10 @@ class Bits(object):
         if len(s) & 1:
             s = '0' + s
         try:
-            data = bytes([int(x) for x in binascii.unhexlify(s)])
+            data = bytes([int(x) for x in ubinascii.unhexlify(s)])
         except AttributeError:
             # the Python 2.x way
-            data = binascii.unhexlify(s)
+            data = ubinascii.unhexlify(s)
         # Now add bytes as needed to get the right length.
         extrabytes = ((length + 7) // 8) - len(data)
         if extrabytes > 0:
@@ -856,7 +856,7 @@ class Bits(object):
         startbyte = (start + offset) // 8
         endbyte = (start + offset + length - 1) // 8
 
-        b = binascii.hexlify(bytes(self._datastore.getbyteslice(startbyte, endbyte + 1)))
+        b = ubinascii.hexlify(bytes(self._datastore.getbyteslice(startbyte, endbyte + 1)))
         assert b
         i = int(b, 16)
         final_bits = 8 - ((start + offset + length) % 8)
@@ -963,7 +963,7 @@ class Bits(object):
             chunksize = 4 # for 'L' format
             while endbyte - chunksize + 1 >= startbyte:
                 val <<= 8 * chunksize
-                val += struct.unpack('<L', bytes(self._datastore.getbyteslice(endbyte + 1 - chunksize, endbyte + 1)))[0]
+                val += ustruct.unpack('<L', bytes(self._datastore.getbyteslice(endbyte + 1 - chunksize, endbyte + 1)))[0]
                 endbyte -= chunksize
             for b in xrange(endbyte, startbyte - 1, -1):
                 val <<= 8
@@ -1008,9 +1008,9 @@ class Bits(object):
             raise CreationError("A non-zero length must be specified with a "
                                 "float initialiser.")
         if length == 32:
-            b = struct.pack('>f', f)
+            b = ustruct.pack('>f', f)
         elif length == 64:
-            b = struct.pack('>d', f)
+            b = ustruct.pack('>d', f)
         else:
             raise CreationError("floats can only be 32 or 64 bits long, "
                                 "not {0} bits", length)
@@ -1021,14 +1021,14 @@ class Bits(object):
         if not (start + self._offset) % 8:
             startbyte = (start + self._offset) // 8
             if length == 32:
-                f, = struct.unpack('>f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
+                f, = ustruct.unpack('>f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
             elif length == 64:
-                f, = struct.unpack('>d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
+                f, = ustruct.unpack('>d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
         else:
             if length == 32:
-                f, = struct.unpack('>f', self._readbytes(32, start))
+                f, = ustruct.unpack('>f', self._readbytes(32, start))
             elif length == 64:
-                f, = struct.unpack('>d', self._readbytes(64, start))
+                f, = ustruct.unpack('>d', self._readbytes(64, start))
         try:
             return f
         except NameError:
@@ -1046,9 +1046,9 @@ class Bits(object):
             raise CreationError("A non-zero length must be specified with a "
                                 "float initialiser.")
         if length == 32:
-            b = struct.pack('<f', f)
+            b = ustruct.pack('<f', f)
         elif length == 64:
-            b = struct.pack('<d', f)
+            b = ustruct.pack('<d', f)
         else:
             raise CreationError("floats can only be 32 or 64 bits long, "
                                 "not {0} bits", length)
@@ -1059,14 +1059,14 @@ class Bits(object):
         startbyte, offset = divmod(start + self._offset, 8)
         if not offset:
             if length == 32:
-                f, = struct.unpack('<f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
+                f, = ustruct.unpack('<f', bytes(self._datastore.getbyteslice(startbyte, startbyte + 4)))
             elif length == 64:
-                f, = struct.unpack('<d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
+                f, = ustruct.unpack('<d', bytes(self._datastore.getbyteslice(startbyte, startbyte + 8)))
         else:
             if length == 32:
-                f, = struct.unpack('<f', self._readbytes(32, start))
+                f, = ustruct.unpack('<f', self._readbytes(32, start))
             elif length == 64:
-                f, = struct.unpack('<d', self._readbytes(64, start))
+                f, = ustruct.unpack('<d', self._readbytes(64, start))
         try:
             return f
         except NameError:
@@ -1313,10 +1313,10 @@ class Bits(object):
         b = self._datastore.getbyteslice(startbyte, endbyte + 1)
         # Convert to a string of '0' and '1's (via a hex string an and int!)
         try:
-            c = "{:0{}b}".format(int(binascii.hexlify(b), 16), 8*len(b))
+            c = "{:0{}b}".format(int(ubinascii.hexlify(b), 16), 8*len(b))
         except TypeError:
             # Hack to get Python 2.6 working
-            c = "{0:0{1}b}".format(int(binascii.hexlify(str(b)), 16), 8*len(b))
+            c = "{0:0{1}b}".format(int(ubinascii.hexlify(str(b)), 16), 8*len(b))
         # Finally chop off any extra bits.
         return c[startoffset:startoffset + length]
 
@@ -1369,7 +1369,7 @@ class Bits(object):
         try:
             try:
 #                data = bytearray.fromhex(hexstring)
-                data = bytearray([int(x) for x in binascii.unhexlify(hexstring)])
+                data = bytearray([int(x) for x in ubinascii.unhexlify(hexstring)])
             except TypeError:
                 raise NotImplementedError('Python 2.x is not supported')
                 # Python 2.6 needs a unicode string (a bug). 2.7 and 3.x work fine.
@@ -1391,7 +1391,7 @@ class Bits(object):
         except AttributeError:
             # This monstrosity is the only thing I could get to work for both 2.6 and 3.1.
             # TODO: Is utf-8 really what we mean here?
-            s = str(binascii.hexlify(s).decode('utf-8'))
+            s = str(ubinascii.hexlify(s).decode('utf-8'))
         # If there's one nibble too many then cut it off
         return s[:-1] if (length // 4) % 2 else s
 
