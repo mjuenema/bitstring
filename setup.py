@@ -1,5 +1,3 @@
-from ubitstring import __version__
-
 import sys
 # Remove current dir from sys.path, otherwise setuptools will peek up our
 # module instead of system's.
@@ -13,7 +11,7 @@ if sys.version_info[0] < 2:
     raise Exception('This version of bitstring needs Python 3 or later.')
 
 setup(name='micropython-bitstring',
-      version=__version__,
+      version='0.1.2',
       description="Very stripped down version of Scott Griffith's Bitstring package.",
       author='Markus Juenemann',
       author_email='markus@juenemann.net',
@@ -31,6 +29,6 @@ setup(name='micropython-bitstring',
         'Programming Language :: Python :: Implementation :: MicroPython',
         'Topic :: Software Development :: Libraries :: Python Modules'
       ],
-      install_requires=['micropython-copy','micropython-binascii','micropython-struct','micropython-types'],
+      install_requires=[],
       **kwds
       )
