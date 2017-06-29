@@ -54,7 +54,6 @@ __version__ = "0.1.2"
 
 __author__ = "Scott Griffiths, Markus Juenemann"
 
-import copy
 import sys
 import ubinascii
 import ustruct
@@ -260,7 +259,8 @@ def offsetcopy(s, newoffset):
     """
     assert 0 <= newoffset < 8
     if not s.bitlength:
-        return copy.copy(s)
+        raise NotImplementedError
+        #return copy.copy(s)
     else:
         if newoffset == s.offset % 8:
             return ByteStore(s.getbyteslice(s.byteoffset, s.byteoffset + s.bytelength), s.bitlength, newoffset)
