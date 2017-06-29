@@ -14,7 +14,7 @@ if sys.version_info[0] < 2:
 
 setup(name='micropython-bitstring',
       version=__version__,
-      description="Very stripped down version of Scrott Griffith's Bitstring package.",
+      description="Very stripped down version of Scott Griffith's Bitstring package.",
       author='Markus Juenemann',
       author_email='markus@juenemann.net',
       url='https://github.com/mjuenema/micropython-bitstring',

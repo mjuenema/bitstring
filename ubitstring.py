@@ -50,13 +50,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __author__ = "Scott Griffiths, Markus Juenemann"
 
 import copy
 import sys
-import binascii
+import ubinascii
 import struct
 
 byteorder = sys.byteorder
@@ -834,10 +834,10 @@ class Bits(object):
         if len(s) & 1:
             s = '0' + s
         try:
-            data = bytes([int(x) for x in binascii.unhexlify(s)])
+            data = bytes([int(x) for x in ubinascii.unhexlify(s)])
         except AttributeError:
             # the Python 2.x way
-            data = binascii.unhexlify(s)
+            data = ubinascii.unhexlify(s)
         # Now add bytes as needed to get the right length.
         extrabytes = ((length + 7) // 8) - len(data)
         if extrabytes > 0:
@@ -856,7 +856,7 @@ class Bits(object):
         startbyte = (start + offset) // 8
         endbyte = (start + offset + length - 1) // 8
 
-        b = binascii.hexlify(bytes(self._datastore.getbyteslice(startbyte, endbyte + 1)))
+        b = ubinascii.hexlify(bytes(self._datastore.getbyteslice(startbyte, endbyte + 1)))
         assert b
         i = int(b, 16)
         final_bits = 8 - ((start + offset + length) % 8)
@@ -1313,10 +1313,10 @@ class Bits(object):
         b = self._datastore.getbyteslice(startbyte, endbyte + 1)
         # Convert to a string of '0' and '1's (via a hex string an and int!)
         try:
-            c = "{:0{}b}".format(int(binascii.hexlify(b), 16), 8*len(b))
+            c = "{:0{}b}".format(int(ubinascii.hexlify(b), 16), 8*len(b))
         except TypeError:
             # Hack to get Python 2.6 working
-            c = "{0:0{1}b}".format(int(binascii.hexlify(str(b)), 16), 8*len(b))
+            c = "{0:0{1}b}".format(int(ubinascii.hexlify(str(b)), 16), 8*len(b))
         # Finally chop off any extra bits.
         return c[startoffset:startoffset + length]
 
@@ -1369,7 +1369,7 @@ class Bits(object):
         try:
             try:
 #                data = bytearray.fromhex(hexstring)
-                data = bytearray([int(x) for x in binascii.unhexlify(hexstring)])
+                data = bytearray([int(x) for x in ubinascii.unhexlify(hexstring)])
             except TypeError:
                 raise NotImplementedError('Python 2.x is not supported')
                 # Python 2.6 needs a unicode string (a bug). 2.7 and 3.x work fine.
@@ -1391,7 +1391,7 @@ class Bits(object):
         except AttributeError:
             # This monstrosity is the only thing I could get to work for both 2.6 and 3.1.
             # TODO: Is utf-8 really what we mean here?
-            s = str(binascii.hexlify(s).decode('utf-8'))
+            s = str(ubinascii.hexlify(s).decode('utf-8'))
         # If there's one nibble too many then cut it off
         return s[:-1] if (length // 4) % 2 else s
 
