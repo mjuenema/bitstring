@@ -66,11 +66,6 @@ bytealigned = False
 # Maximum number of digits to use in __str__ and __repr__.
 MAX_CHARS = 250
 
-# Maximum size of caches used for speed optimisations.
-CACHE_SIZE = 10
-
-
-
 class Error(Exception):
     """Base class for errors in the bitstring module."""
 
@@ -1416,7 +1411,7 @@ class Bits(object):
                               self.len, self._offset)
 
     @classmethod
-    def _converttobitstring(cls, bs, offset=0, cache={}):
+    def _converttobitstring(cls, bs, offset=0):
         """Convert bs to a bitstring and return it.
 
         offset gives the suggested bit offset of first significant
@@ -1425,28 +1420,22 @@ class Bits(object):
         """
         if isinstance(bs, Bits):
             return bs
-        try:
-            return cache[(bs, offset)]
-        except KeyError:
-            if isinstance(bs, basestring):
-                b = cls()
-                try:
-                    _, tokens = tokenparser(bs)
-                except ValueError as e:
-                    raise CreationError(*e.args)
-                if tokens:
-                    b._append(Bits._init_with_token(*tokens[0]))
-                    b._datastore = offsetcopy(b._datastore, offset)
-                    for token in tokens[1:]:
-                        b._append(Bits._init_with_token(*token))
-                assert b._assertsanity()
-                assert b.len == 0 or b._offset == offset
-                if len(cache) < CACHE_SIZE:
-                    cache[(bs, offset)] = b
-                return b
-        except TypeError:
-            # Unhashable type
-            pass
+
+        if isinstance(bs, basestring):
+            b = cls()
+            try:
+                _, tokens = tokenparser(bs)
+            except ValueError as e:
+                raise CreationError(*e.args)
+            if tokens:
+                b._append(Bits._init_with_token(*tokens[0]))
+                b._datastore = offsetcopy(b._datastore, offset)
+                for token in tokens[1:]:
+                    b._append(Bits._init_with_token(*token))
+            assert b._assertsanity()
+            assert b.len == 0 or b._offset == offset
+            return b
+
         return cls(bs)
 
     def _copy(self):
