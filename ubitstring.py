@@ -412,7 +412,6 @@ try:
 except NameError:
     for i in range(256):
         BYTE_REVERSAL_DICT[i] = bytes([int("{0:08b}".format(i)[:-1], 2)])
-    #from io import IOBase as file
     xrange = range
     basestring = str
 

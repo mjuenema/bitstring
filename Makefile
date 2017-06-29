@@ -2,7 +2,8 @@
 
 
 all:
-	echo TODO
+	@echo 'make test'
+	@echo 'make coverage'
 
 .PHONY: test
 test:
