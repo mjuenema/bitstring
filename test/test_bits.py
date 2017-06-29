@@ -373,7 +373,10 @@ class Misc(unittest.TestCase):
 
         assert a.len == 32
 
-        assert a.int == -31111
+        assert a.int == a.intbe == -31111
+        assert a.intle == a.intne == 2038890495
+        assert a.uint == a.uintbe == 4294936185
+        assert a.uintle == a.uintne == 2038890495
         assert a.hex == 'ffff8679'
         assert a.bin == '11111111111111111000011001111001'
         assert a.bytes == b'\xff\xff\x86y'
@@ -399,13 +402,35 @@ class Misc(unittest.TestCase):
         assert repr(a) == "Bits('0xffff8679')"
         assert hash(a) > 0
 
-        f = Bits(float=3.1415, length=32)
-        assert f.len == 32
+        f32 = Bits(float=3.1415, length=32)
+        f32.float
+        f32.floatbe
+        f32.floatle
+        f32.floatne
+        assert f32.len == 32
 
-        assert a != f
+        f64 = Bits(float=3.1415, length=64)
+        f64.float
+        f64.floatbe
+        f64.floatle
+        f64.floatne
+        assert f64.len == 64
 
+        assert a != f32 != f64
 
-class ModifiedByAddingBug(unittest.TestCase):
+        Bits(floatle=3.1415, length=32)
+        Bits(floatbe=3.1415, length=32)
+        Bits(floatne=3.1415, length=32)
+
+        Bits(intbe=127, length=8)
+        Bits(intle=127, length=8)
+        Bits(intne=127, length=8)
+
+        Bits(uintbe=127, length=8)
+        Bits(uintle=127, length=8)
+        Bits(uintne=127, length=8)
+
+        assert Bits(int=-31, length=9).oct == '741'
 
     def testAdding(self):
         a = Bits(bin='0b0')

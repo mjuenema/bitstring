@@ -55,8 +55,12 @@ __version__ = "0.1.2"
 __author__ = "Scott Griffiths, Markus Juenemann"
 
 import sys
-import ubinascii
-import ustruct
+try:
+    import ubinascii
+    import ustruct
+except ImportError:
+    import binascii as ubinascii
+    import struct as ustruct
 
 byteorder = sys.byteorder
 
@@ -78,51 +82,52 @@ class Error(Exception):
             return self.msg.format(*self.params)
         return self.msg
 
+ReadError = InterpretError = ByteAlignError = CreationError = Error
 
-class ReadError(IndexError):
-    """Reading or peeking past the end of a bitstring."""
-
-    def __init__(self, *params):
-        self.msg = params[0] if params else ''
-        self.params = params[1:]
-
-    def __str__(self):
-        if self.params:
-            return self.msg.format(*self.params)
-        return self.msg
-
-
-class InterpretError(ValueError):
-    """Inappropriate interpretation of binary data."""
-
-    def __init__(self, *params):
-        self.msg = params[0] if params else ''
-        self.params = params[1:]
-
-    def __str__(self):
-        if self.params:
-            return self.msg.format(*self.params)
-        return self.msg
-
-
-class ByteAlignError(Error):
-    """Whole-byte position or length needed."""
-
-    def __init__(self, *params):
-        Error.__init__(self, *params)
-
-
-class CreationError(ValueError):
-    """Inappropriate argument during bitstring creation."""
-
-    def __init__(self, *params):
-        self.msg = params[0] if params else ''
-        self.params = params[1:]
-
-    def __str__(self):
-        if self.params:
-            return self.msg.format(*self.params)
-        return self.msg
+##class ReadError(IndexError):
+##    """Reading or peeking past the end of a bitstring."""
+##
+##    def __init__(self, *params):
+##        self.msg = params[0] if params else ''
+##        self.params = params[1:]
+##
+##    def __str__(self):
+##        if self.params:
+##            return self.msg.format(*self.params)
+##        return self.msg
+##
+##
+##class InterpretError(ValueError):
+##    """Inappropriate interpretation of binary data."""
+##
+##    def __init__(self, *params):
+##        self.msg = params[0] if params else ''
+##        self.params = params[1:]
+##
+##    def __str__(self):
+##        if self.params:
+##            return self.msg.format(*self.params)
+##        return self.msg
+##
+##
+##class ByteAlignError(Error):
+##    """Whole-byte position or length needed."""
+##
+##    def __init__(self, *params):
+##        Error.__init__(self, *params)
+##
+##
+##class CreationError(ValueError):
+##    """Inappropriate argument during bitstring creation."""
+##
+##    def __init__(self, *params):
+##        self.msg = params[0] if params else ''
+##        self.params = params[1:]
+##
+##    def __str__(self):
+##        if self.params:
+##            return self.msg.format(*self.params)
+##        return self.msg
 
 
 class ConstByteStore(object):
@@ -1410,33 +1415,33 @@ class Bits(object):
         self._setbytes_unsafe(self._datastore.getbyteslice(0, self._datastore.bytelength),
                               self.len, self._offset)
 
-    @classmethod
-    def _converttobitstring(cls, bs, offset=0):
-        """Convert bs to a bitstring and return it.
-
-        offset gives the suggested bit offset of first significant
-        bit, to optimise append etc.
-
-        """
-        if isinstance(bs, Bits):
-            return bs
-
-        if isinstance(bs, basestring):
-            b = cls()
-            try:
-                _, tokens = tokenparser(bs)
-            except ValueError as e:
-                raise CreationError(*e.args)
-            if tokens:
-                b._append(Bits._init_with_token(*tokens[0]))
-                b._datastore = offsetcopy(b._datastore, offset)
-                for token in tokens[1:]:
-                    b._append(Bits._init_with_token(*token))
-            assert b._assertsanity()
-            assert b.len == 0 or b._offset == offset
-            return b
-
-        return cls(bs)
+##    @classmethod
+##    def _converttobitstring(cls, bs, offset=0):
+##        """Convert bs to a bitstring and return it.
+##
+##        offset gives the suggested bit offset of first significant
+##        bit, to optimise append etc.
+##
+##        """
+##        if isinstance(bs, Bits):
+##            return bs
+##
+##        if isinstance(bs, basestring):
+##            b = cls()
+##            try:
+##                _, tokens = tokenparser(bs)
+##            except ValueError as e:
+##                raise CreationError(*e.args)
+##            if tokens:
+##                b._append(Bits._init_with_token(*tokens[0]))
+##                b._datastore = offsetcopy(b._datastore, offset)
+##                for token in tokens[1:]:
+##                    b._append(Bits._init_with_token(*token))
+##            assert b._assertsanity()
+##            assert b.len == 0 or b._offset == offset
+##            return b
+##
+##        return cls(bs)
 
     def _copy(self):
         """Create and return a new copy of the Bits (always in memory)."""
@@ -1477,111 +1482,111 @@ class Bits(object):
             newoffset = 0
         self._setbytes_unsafe(bytearray().join(n), self.length, newoffset)
 
-    def _truncatestart(self, bits):
-        """Truncate bits from the start of the bitstring."""
-        assert 0 <= bits <= self.len
-        if not bits:
-            return
-        if bits == self.len:
-            self._clear()
-            return
-        bytepos, offset = divmod(self._offset + bits, 8)
-        self._setbytes_unsafe(self._datastore.getbyteslice(bytepos, self._datastore.bytelength), self.len - bits,
-                              offset)
-        assert self._assertsanity()
+##    def _truncatestart(self, bits):
+##        """Truncate bits from the start of the bitstring."""
+##        assert 0 <= bits <= self.len
+##        if not bits:
+##            return
+##        if bits == self.len:
+##            self._clear()
+##            return
+##        bytepos, offset = divmod(self._offset + bits, 8)
+##        self._setbytes_unsafe(self._datastore.getbyteslice(bytepos, self._datastore.bytelength), self.len - bits,
+##                              offset)
+##        assert self._assertsanity()
+##
+##    def _truncateend(self, bits):
+##        """Truncate bits from the end of the bitstring."""
+##        assert 0 <= bits <= self.len
+##        if not bits:
+##            return
+##        if bits == self.len:
+##            self._clear()
+##            return
+##        newlength_in_bytes = (self._offset + self.len - bits + 7) // 8
+##        self._setbytes_unsafe(self._datastore.getbyteslice(0, newlength_in_bytes), self.len - bits,
+##                              self._offset)
+##        assert self._assertsanity()
+##
+##    def _insert(self, bs, pos):
+##        """Insert bs at pos."""
+##        assert 0 <= pos <= self.len
+##        if pos > self.len // 2:
+##            # Inserting nearer end, so cut off end.
+##            end = self._slice(pos, self.len)
+##            self._truncateend(self.len - pos)
+##            self._append(bs)
+##            self._append(end)
+##        else:
+##            # Inserting nearer start, so cut off start.
+##            start = self._slice(0, pos)
+##            self._truncatestart(pos)
+##            self._prepend(bs)
+##            self._prepend(start)
+##        try:
+##            self._pos = pos + bs.len
+##        except AttributeError:
+##            pass
+##        assert self._assertsanity()
 
-    def _truncateend(self, bits):
-        """Truncate bits from the end of the bitstring."""
-        assert 0 <= bits <= self.len
-        if not bits:
-            return
-        if bits == self.len:
-            self._clear()
-            return
-        newlength_in_bytes = (self._offset + self.len - bits + 7) // 8
-        self._setbytes_unsafe(self._datastore.getbyteslice(0, newlength_in_bytes), self.len - bits,
-                              self._offset)
-        assert self._assertsanity()
+##    def _overwrite(self, bs, pos):
+##        """Overwrite with bs at pos."""
+##        assert 0 <= pos < self.len
+##        if bs is self:
+##            # Just overwriting with self, so do nothing.
+##            assert pos == 0
+##            return
+##        firstbytepos = (self._offset + pos) // 8
+##        lastbytepos = (self._offset + pos + bs.len - 1) // 8
+##        bytepos, bitoffset = divmod(self._offset + pos, 8)
+##        if firstbytepos == lastbytepos:
+##            mask = ((1 << bs.len) - 1) << (8 - bs.len - bitoffset)
+##            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) & (~mask))
+##            d = offsetcopy(bs._datastore, bitoffset)
+##            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) | (d.getbyte(0) & mask))
+##        else:
+##            # Do first byte
+##            mask = (1 << (8 - bitoffset)) - 1
+##            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) & (~mask))
+##            d = offsetcopy(bs._datastore, bitoffset)
+##            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) | (d.getbyte(0) & mask))
+##            # Now do all the full bytes
+##            self._datastore.setbyteslice(firstbytepos + 1, lastbytepos, d.getbyteslice(1, lastbytepos - firstbytepos))
+##            # and finally the last byte
+##            bitsleft = (self._offset + pos + bs.len) % 8
+##            if not bitsleft:
+##                bitsleft = 8
+##            mask = (1 << (8 - bitsleft)) - 1
+##            self._datastore.setbyte(lastbytepos, self._datastore.getbyte(lastbytepos) & mask)
+##            self._datastore.setbyte(lastbytepos,
+##                                    self._datastore.getbyte(lastbytepos) | (d.getbyte(d.bytelength - 1) & ~mask))
+##        assert self._assertsanity()
 
-    def _insert(self, bs, pos):
-        """Insert bs at pos."""
-        assert 0 <= pos <= self.len
-        if pos > self.len // 2:
-            # Inserting nearer end, so cut off end.
-            end = self._slice(pos, self.len)
-            self._truncateend(self.len - pos)
-            self._append(bs)
-            self._append(end)
-        else:
-            # Inserting nearer start, so cut off start.
-            start = self._slice(0, pos)
-            self._truncatestart(pos)
-            self._prepend(bs)
-            self._prepend(start)
-        try:
-            self._pos = pos + bs.len
-        except AttributeError:
-            pass
-        assert self._assertsanity()
-
-    def _overwrite(self, bs, pos):
-        """Overwrite with bs at pos."""
-        assert 0 <= pos < self.len
-        if bs is self:
-            # Just overwriting with self, so do nothing.
-            assert pos == 0
-            return
-        firstbytepos = (self._offset + pos) // 8
-        lastbytepos = (self._offset + pos + bs.len - 1) // 8
-        bytepos, bitoffset = divmod(self._offset + pos, 8)
-        if firstbytepos == lastbytepos:
-            mask = ((1 << bs.len) - 1) << (8 - bs.len - bitoffset)
-            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) & (~mask))
-            d = offsetcopy(bs._datastore, bitoffset)
-            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) | (d.getbyte(0) & mask))
-        else:
-            # Do first byte
-            mask = (1 << (8 - bitoffset)) - 1
-            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) & (~mask))
-            d = offsetcopy(bs._datastore, bitoffset)
-            self._datastore.setbyte(bytepos, self._datastore.getbyte(bytepos) | (d.getbyte(0) & mask))
-            # Now do all the full bytes
-            self._datastore.setbyteslice(firstbytepos + 1, lastbytepos, d.getbyteslice(1, lastbytepos - firstbytepos))
-            # and finally the last byte
-            bitsleft = (self._offset + pos + bs.len) % 8
-            if not bitsleft:
-                bitsleft = 8
-            mask = (1 << (8 - bitsleft)) - 1
-            self._datastore.setbyte(lastbytepos, self._datastore.getbyte(lastbytepos) & mask)
-            self._datastore.setbyte(lastbytepos,
-                                    self._datastore.getbyte(lastbytepos) | (d.getbyte(d.bytelength - 1) & ~mask))
-        assert self._assertsanity()
-
-    def _delete(self, bits, pos):
-        """Delete bits at pos."""
-        assert 0 <= pos <= self.len
-        assert pos + bits <= self.len
-        if not pos:
-            # Cutting bits off at the start.
-            self._truncatestart(bits)
-            return
-        if pos + bits == self.len:
-            # Cutting bits off at the end.
-            self._truncateend(bits)
-            return
-        if pos > self.len - pos - bits:
-            # More bits before cut point than after it, so do bit shifting
-            # on the final bits.
-            end = self._slice(pos + bits, self.len)
-            assert self.len - pos > 0
-            self._truncateend(self.len - pos)
-            self._append(end)
-            return
-        # More bits after the cut point than before it.
-        start = self._slice(0, pos)
-        self._truncatestart(pos + bits)
-        self._prepend(start)
-        return
+##    def _delete(self, bits, pos):
+##        """Delete bits at pos."""
+##        assert 0 <= pos <= self.len
+##        assert pos + bits <= self.len
+##        if not pos:
+##            # Cutting bits off at the start.
+##            self._truncatestart(bits)
+##            return
+##        if pos + bits == self.len:
+##            # Cutting bits off at the end.
+##            self._truncateend(bits)
+##            return
+##        if pos > self.len - pos - bits:
+##            # More bits before cut point than after it, so do bit shifting
+##            # on the final bits.
+##            end = self._slice(pos + bits, self.len)
+##            assert self.len - pos > 0
+##            self._truncateend(self.len - pos)
+##            self._append(end)
+##            return
+##        # More bits after the cut point than before it.
+##        start = self._slice(0, pos)
+##        self._truncatestart(pos + bits)
+##        self._prepend(start)
+##        return
 
     def _reversebytes(self, start, end):
         """Reverse bytes in-place."""
@@ -1686,64 +1691,64 @@ class Bits(object):
 
 
 
-    def _findbytes(self, bytes_, start, end, bytealigned):
-        """Quicker version of find when everything's whole byte
-        and byte aligned.
-
-        """
-        assert self._datastore.offset == 0
-        assert bytealigned is True
-        # Extract data bytes from bitstring to be found.
-        bytepos = (start + 7) // 8
-        found = False
-        p = bytepos
-        finalpos = end // 8
-        increment = max(1024, len(bytes_) * 10)
-        buffersize = increment + len(bytes_)
-        while p < finalpos:
-            # Read in file or from memory in overlapping chunks and search the chunks.
-            buf = bytearray(self._datastore.getbyteslice(p, min(p + buffersize, finalpos)))
-            pos = buf.find(bytes_)
-            if pos != -1:
-                found = True
-                p += pos
-                break
-            p += increment
-        if not found:
-            return ()
-        return (p * 8,)
-
-    def _findregex(self, reg_ex, start, end, bytealigned):
-        """Find first occurrence of a compiled regular expression.
-
-        Note that this doesn't support arbitrary regexes, in particular they
-        must match a known length.
-
-        """
-        p = start
-        length = len(reg_ex.pattern)
-        # We grab overlapping chunks of the binary representation and
-        # do an ordinary string search within that.
-        increment = max(4096, length * 10)
-        buffersize = increment + length
-        while p < end:
-            buf = self._readbin(min(buffersize, end - p), p)
-            # Test using regular expressions...
-            m = reg_ex.search(buf)
-            if m:
-                pos = m.start()
-            # pos = buf.find(targetbin)
-            # if pos != -1:
-                # if bytealigned then we only accept byte aligned positions.
-                if not bytealigned or (p + pos) % 8 == 0:
-                    return (p + pos,)
-                if bytealigned:
-                    # Advance to just beyond the non-byte-aligned match and try again...
-                    p += pos + 1
-                    continue
-            p += increment
-            # Not found, return empty tuple
-        return ()
+##    def _findbytes(self, bytes_, start, end, bytealigned):
+##        """Quicker version of find when everything's whole byte
+##        and byte aligned.
+##
+##        """
+##        assert self._datastore.offset == 0
+##        assert bytealigned is True
+##        # Extract data bytes from bitstring to be found.
+##        bytepos = (start + 7) // 8
+##        found = False
+##        p = bytepos
+##        finalpos = end // 8
+##        increment = max(1024, len(bytes_) * 10)
+##        buffersize = increment + len(bytes_)
+##        while p < finalpos:
+##            # Read in file or from memory in overlapping chunks and search the chunks.
+##            buf = bytearray(self._datastore.getbyteslice(p, min(p + buffersize, finalpos)))
+##            pos = buf.find(bytes_)
+##            if pos != -1:
+##                found = True
+##                p += pos
+##                break
+##            p += increment
+##        if not found:
+##            return ()
+##        return (p * 8,)
+##
+##    def _findregex(self, reg_ex, start, end, bytealigned):
+##        """Find first occurrence of a compiled regular expression.
+##
+##        Note that this doesn't support arbitrary regexes, in particular they
+##        must match a known length.
+##
+##        """
+##        p = start
+##        length = len(reg_ex.pattern)
+##        # We grab overlapping chunks of the binary representation and
+##        # do an ordinary string search within that.
+##        increment = max(4096, length * 10)
+##        buffersize = increment + length
+##        while p < end:
+##            buf = self._readbin(min(buffersize, end - p), p)
+##            # Test using regular expressions...
+##            m = reg_ex.search(buf)
+##            if m:
+##                pos = m.start()
+##            # pos = buf.find(targetbin)
+##            # if pos != -1:
+##                # if bytealigned then we only accept byte aligned positions.
+##                if not bytealigned or (p + pos) % 8 == 0:
+##                    return (p + pos,)
+##                if bytealigned:
+##                    # Advance to just beyond the non-byte-aligned match and try again...
+##                    p += pos + 1
+##                    continue
+##            p += increment
+##            # Not found, return empty tuple
+##        return ()
 
 
     def tobytes(self):
